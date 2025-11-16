@@ -21,7 +21,7 @@ from sentence_transformers import SentenceTransformer, util
 #   ],
 #   ...
 # }
-JSONL_FILE = "explainrag_hotpot_llama.jsonl"
+JSONL_FILE = "./../1-creating_dataset/explainrag_hotpot_llama.jsonl"
 
 # Saídas
 CSV_OUT = "explanations_sentencewise_embeddings_metrics.csv"

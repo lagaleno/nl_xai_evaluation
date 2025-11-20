@@ -58,8 +58,10 @@ project_root/
 │   └── metrics/                  # Evaluation metrics (precision, recall, F1)
 │
 ├── 3-experiments/
-│   ├── upcoming_metrics/            # Placeholder for KG, Jaccard, FOL experiments
-│   └── ...
+│   ├── utils.py/            # File with functions to be used in scripts of the experiment
+│   ├── cosine_similarity/   # Compute the cosine similarity
+    ├── jaccard_similarity/  # Compute Jaccard similarity
+    └── ...
 │
 ├── requirements.txt
 ├── install.sh
@@ -116,8 +118,55 @@ Outputs:
 
 ---
 
-### **Step 4 — Experiments **
-TODO: Finish experiments
+### **Step 4 — Experiments**
+This project includes a set of experiments to analyze how different automatic metrics behave when evaluating natural-language explanations in a RAG setting. All experiments assume that the explanation dataset has already been generated, the file: `1-creating_dataset/explainrag_hotpot_llama.jsonl`.
+
+#### Cosine Similarity
+This experiment measures the global semantic similarity between each explanation and its supporting chunk using sentence embeddings and cosine similarity. To run:
+
+```bash
+python 3-experiments/cosine_similarity/run_cosine_similarity.py
+```
+What it does:
+
+- Loads explainrag_dataset.jsonl
+- Builds aligned pairs: (chunk, explanation, label)
+- Encodes chunks and explanations with all-MiniLM-L6-v2 (SentenceTransformers)
+- Computes cosine similarity between each chunk–explanation pair
+  
+Output:
+```
+3-experiments/cosine_similarity/cosine_similarity_results.csv
+3-experiments/cosine_similarity/cosine_similarity_summary_by_label.csv
+```
+#### Jaccard Similarity
+This experiment computes a token-level Jaccard similarity between each explanation and its chunk, serving as a simple lexical baseline for comparison with embedding-based methods. To run:
+
+```bash
+python 3-experiments/jaccard_similarity/run_jaccard_similarity.py
+```
+What it does:
+- Loads explainrag_dataset.jsonl
+- Reuses the same (chunk, explanation, label) pairs
+- Tokenizes both texts into lowercase alphanumeric “words”
+- Computes Jaccard similarity
+
+Output:
+```
+3-experiments/jaccard_similarity/jaccard_similarity_results.csv
+3-experiments/jaccard_similarity/jaccard_similarity_summary_by_label.csv
+```
+
+### Shared Utilities
+Experiments reuse common helper functions defined in: `3-experiments/utils.py`
+
+This module:
+- parses the JSONL dataset,
+- builds structured examples with:
+    - dataset_id
+    - chunk
+    - explanations (correct, incomplete, incorrect)
+- flattens them into chunk–explanation pairs for metric computation.
 
 ---
 

@@ -1,0 +1,85 @@
+{
+  "rules": [
+    {
+      "name": "Transitivity of located_in",
+      "description": "If A is located in B and B is located in C, then A is located in C",
+      "premises": [
+        {
+          "predicate": "located_in",
+          "args": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "predicate": "located_in",
+          "args": [
+            "B",
+            "C"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "located_in",
+        "args": [
+          "A",
+          "C"
+        ]
+      }
+    },
+    {
+      "name": "Inheritance of type_of through located_in",
+      "description": "If A is located in B and B has type T, then A has type T",
+      "premises": [
+        {
+          "predicate": "located_in",
+          "args": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "predicate": "type_of",
+          "args": [
+            "B",
+            "T"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "type_of",
+        "args": [
+          "A",
+          "T"
+        ]
+      }
+    },
+    {
+      "name": "Membership inference through member_of and founder_of",
+      "description": "If A is a member of B and B was founded by C, then A is related to C",
+      "premises": [
+        {
+          "predicate": "member_of",
+          "args": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "predicate": "founder_of",
+          "args": [
+            "B",
+            "C"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "related_to",
+        "args": [
+          "A",
+          "C"
+        ]
+      }
+    }
+  ]
+}

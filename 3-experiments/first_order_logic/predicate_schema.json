@@ -1,0 +1,60 @@
+{
+  "predicates": [
+    {
+      "name": "located_in",
+      "args": [
+        "entity",
+        "location"
+      ],
+      "description": "An entity is located within a specific location"
+    },
+    {
+      "name": "type_of",
+      "args": [
+        "entity",
+        "type"
+      ],
+      "description": "An entity belongs to a particular type or category"
+    },
+    {
+      "name": "created_by",
+      "args": [
+        "work",
+        "creator"
+      ],
+      "description": "A work was created by an individual or organization"
+    },
+    {
+      "name": "starring",
+      "args": [
+        "work",
+        "actor"
+      ],
+      "description": "A work features an actor in a starring role"
+    },
+    {
+      "name": "member_of",
+      "args": [
+        "organization",
+        "member"
+      ],
+      "description": "An individual is a member of a particular organization"
+    },
+    {
+      "name": "founder_of",
+      "args": [
+        "organization",
+        "founder"
+      ],
+      "description": "An organization was founded by an individual or group"
+    },
+    {
+      "name": "related_to",
+      "args": [
+        "entity1",
+        "entity2"
+      ],
+      "description": "Two entities are related in some way"
+    }
+  ]
+}

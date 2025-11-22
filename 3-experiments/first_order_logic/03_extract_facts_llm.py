@@ -1,0 +1,252 @@
+import ast
+import json
+import os
+import subprocess
+from pathlib import Path
+from typing import Dict, List, Any
+
+import pandas as pd
+
+# ================== CONFIGURAÇÕES ==================
+
+BASE_DIR = Path("3-experiments/first_order_logic")
+
+# Esquema de predicados (já gerado antes)
+SCHEMA_FILE = "predicate_schema.json"
+
+# CSV de entrada com o dataset de explicações
+# Ajuste este caminho para o seu arquivo real
+INPUT_CSV = "../../1-creating_dataset/explainrag_hotpot_llama_summary.csv"
+
+# Colunas esperadas no CSV (ajuste se necessário)
+COL_ID = "id"
+COL_CHUNK = "chunk"
+
+# Aqui é a coluna que contém a LISTA de explicações em formato string
+# (exatamente como o exemplo que você mandou)
+COL_EXPL_LIST = "explanations"  # ajuste para o nome real da coluna
+
+# Arquivo de saída com os fatos extraídos
+OUTPUT_JSONL = "facts_extracted_llm.jsonl"
+
+# Modelo do LLaMA no Ollama
+LLAMA_MODEL_NAME = "llama3"
+
+# Limite opcional de linhas (para teste). Se None, processa tudo.
+MAX_ROWS = None  # ex.: 10 para testar, depois None
+
+# ===================================================
+
+
+def load_schema(path: Path) -> Dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def build_extraction_prompt(schema: Dict[str, Any], text: str, source_type: str) -> str:
+    """
+    Constrói o prompt para o LLaMA extrair fatos de um texto
+    (chunk ou explanation), usando o schema de predicados.
+    source_type: "chunk" ou "explanation" (só para contextualizar no prompt)
+    """
+    predicates = schema.get("predicates", [])
+    pred_lines = []
+    for p in predicates:
+        name = p.get("name")
+        args = ", ".join(p.get("args", []))
+        desc = p.get("description", "")
+        pred_lines.append(f"- {name}({args}): {desc}")
+    predicates_block = "\n".join(pred_lines)
+
+    prompt = f"""
+You are given a {source_type} from a QA system (either a supporting passage or an explanation).
+Your task is to extract factual information from this text and represent it using ONLY
+the following logical predicates and their argument order:
+
+{predicates_block}
+
+IMPORTANT INSTRUCTIONS:
+- Use ONLY the predicates listed above. Do NOT invent new predicates.
+- Respect the EXACT argument order given for each predicate.
+- Arguments should be short, canonical identifiers for entities (e.g., "Paris", "France", "JK_Rowling"),
+  not full sentences.
+- Extract only clear, factual statements that can be expressed with these predicates.
+- If no facts can be extracted according to the schema, return an empty list.
+
+Return the result STRICTLY as JSON in the following format:
+
+{{
+  "facts": [
+    {{
+      "predicate": "predicate_name",
+      "args": ["arg1", "arg2", ...]
+    }},
+    ...
+  ]
+}}
+
+Do NOT include any additional text before or after the JSON.
+
+Here is the {source_type} text:
+
+\"\"\"{text}\"\"\"
+"""
+    return prompt.strip()
+
+
+def call_llama(prompt: str) -> str:
+    """
+    Chama o modelo LLaMA via Ollama.
+    """
+    result = subprocess.run(
+        ["ollama", "run", LLAMA_MODEL_NAME],
+        input=prompt,
+        text=True,
+        capture_output=True,
+    )
+
+    if result.returncode != 0:
+        print("❌ Error calling LLaMA:")
+        print(result.stderr)
+        raise RuntimeError("LLaMA call failed")
+
+    return result.stdout
+
+
+def parse_facts_output(raw_output: str) -> List[Dict[str, Any]]:
+    """
+    Extrai o JSON da saída do LLaMA e retorna a lista de facts.
+    Tolerante a algum texto antes/depois (faz recorte pelo primeiro '{' e último '}').
+    """
+    text = raw_output.strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    if start == -1 or end == -1 or end < start:
+        print("⚠️ Could not find JSON in LLaMA output. Returning empty facts.")
+        print("Raw output:")
+        print(text)
+        return []
+
+    json_str = text[start : end + 1]
+    try:
+        data = json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print("⚠️ Failed to parse JSON, returning empty facts.")
+        print("Error:", e)
+        print("JSON candidate:")
+        print(json_str)
+        return []
+
+    facts = data.get("facts", [])
+    cleaned_facts = []
+    for f in facts:
+        pred = f.get("predicate")
+        args = f.get("args", [])
+        if isinstance(pred, str) and isinstance(args, list):
+            cleaned_facts.append({"predicate": pred, "args": args})
+    return cleaned_facts
+
+
+def process_row(schema: Dict[str, Any], row: pd.Series) -> List[Dict[str, Any]]:
+    """
+    Para uma linha do dataset, faz:
+    - extrai fatos do chunk (uma vez só),
+    - lê a lista de explicações (correct/incomplete/incorrect),
+    - para cada explicação, extrai fatos e gera um registro separado.
+
+    Retorna uma lista de dicts, um por explicação.
+    """
+    ex_id = row[COL_ID]
+
+    # 1) Converte a string da coluna de chunk para dicionário para obter somente o texto do chunk, ignorando a proveniência 
+    #    Extrai fatos do chunk uma única vez
+    print(f"   → Extracting facts from chunk for id={ex_id}")
+    try:
+        chunk_dict = ast.literal_eval(row[COL_CHUNK])
+        chunk_text = chunk_dict["text"]
+    except Exception as e:
+        print(f"⚠️ Could not parse chunk dictionary for id={ex_id}: {e}")
+        chunk_text = []
+    prompt_chunk = build_extraction_prompt(schema, chunk_text, source_type="chunk")
+    raw_chunk = call_llama(prompt_chunk)
+    chunk_facts = parse_facts_output(raw_chunk)
+
+    # 2) Converte a string da coluna de explicações para lista Python
+    #    Exemplo de conteúdo: "[{'label': 'correct', 'text': '...'}, ...]"
+    expl_list_raw = row[COL_EXPL_LIST]
+    try:
+        explanations = ast.literal_eval(expl_list_raw)
+    except Exception as e:
+        print(f"⚠️ Could not parse explanations list for id={ex_id}: {e}")
+        explanations = []
+
+    results_for_row: List[Dict[str, Any]] = []
+
+    # 3) Para cada explicação (correct / incomplete / incorrect)
+    for expl_obj in explanations:
+        expl_label = expl_obj.get("label")
+        expl_text = expl_obj.get("text", "")
+
+        print(f"   → Extracting facts from explanation [{expl_label}] for id={ex_id}")
+        prompt_expl = build_extraction_prompt(schema, expl_text, source_type="explanation")
+        raw_expl = call_llama(prompt_expl)
+        expl_facts = parse_facts_output(raw_expl)
+
+        result = {
+            "id": ex_id,
+            "explanation_label": expl_label,      # correct / incomplete / incorrect
+            "chunk_text": chunk_text,
+            "explanation_text": expl_text,
+            "chunk_facts": chunk_facts,
+            "explanation_facts": expl_facts,
+        }
+        results_for_row.append(result)
+
+    return results_for_row
+
+
+def main():
+    # BASE_DIR.mkdir(parents=True, exist_ok=True)
+
+    print(f"📥 Loading predicate schema from: {SCHEMA_FILE}")
+    schema = load_schema(SCHEMA_FILE)
+
+    print(f"📥 Loading dataset from: {INPUT_CSV}")
+    df = pd.read_csv(INPUT_CSV)
+
+    if MAX_ROWS is not None:
+        df = df.head(MAX_ROWS)
+
+    print(f"Total rows to process: {len(df)}")
+
+    with open(OUTPUT_JSONL, "w", encoding="utf-8") as f_out:
+        for idx, row in df.iterrows():
+
+            ex_id = row[COL_ID]
+            print(f"\n=== Processing row {idx+1}/{len(df)} (id={ex_id}) ===")
+            try:
+                row_results = process_row(schema, row)
+            except Exception as e:
+                print(f"⚠️ Error processing row {ex_id}: {e}")
+                # registra uma entrada com erro (sem fatos)
+                error_record = {
+                    "id": ex_id,
+                    "explanation_label": None,
+                    "chunk_text": str(row[COL_CHUNK]),
+                    "explanation_text": None,
+                    "chunk_facts": [],
+                    "explanation_facts": [],
+                    "error": str(e),
+                }
+                f_out.write(json.dumps(error_record, ensure_ascii=False) + "\n")
+                continue
+
+            # escreve uma linha por explicação
+            for rec in row_results:
+                f_out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+    print(f"\n✅ Finished. Facts saved to: {OUTPUT_JSONL}")
+
+
+if __name__ == "__main__":
+    main()

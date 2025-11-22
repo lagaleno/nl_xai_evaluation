@@ -13,8 +13,10 @@ from utils import build_examples, flatten_examples
 
 # ================== CONFIGURAÇÕES ==================
 
+PROJECT_ROOT = THIS_FILE.parents[2]
+
 # Path to the JSONL dataset with explanations
-JSONL_FILE = "../../1-creating_dataset/explainrag_hotpot_llama.jsonl"
+JSONL_FILE = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama.jsonl"
 
 # Outputs
 CSV_OUT = "jaccard_similarity_results.csv"

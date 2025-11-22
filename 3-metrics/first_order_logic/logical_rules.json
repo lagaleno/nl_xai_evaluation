@@ -1,83 +1,56 @@
 {
   "rules": [
     {
-      "name": "Transitivity of located_in",
-      "description": "If A is located in B and B is located in C, then A is located in C",
+      "name": "Authorship inheritance",
+      "description": "An author's affiliation with an organization implies their publication is part of that organization's publications.",
       "premises": [
         {
-          "predicate": "located_in",
+          "predicate": "Membership",
           "args": [
-            "A",
-            "B"
+            "person",
+            "organization"
           ]
         },
         {
-          "predicate": "located_in",
+          "predicate": "Authorship",
           "args": [
-            "B",
-            "C"
+            "entity",
+            "person"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "located_in",
+        "predicate": "PartOf",
         "args": [
-          "A",
-          "C"
+          "entity",
+          "organization"
         ]
       }
     },
     {
-      "name": "Inheritance of type_of through located_in",
-      "description": "If A is located in B and B has type T, then A has type T",
+      "name": "Event causality",
+      "description": "An event with a known cause is related to the effect of that cause.",
       "premises": [
         {
-          "predicate": "located_in",
+          "predicate": "Cause",
           "args": [
-            "A",
-            "B"
+            "event1",
+            "event2"
           ]
         },
         {
-          "predicate": "type_of",
+          "predicate": "TimeOf",
           "args": [
-            "B",
-            "T"
+            "event1",
+            "time"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "type_of",
+        "predicate": "Effect",
         "args": [
-          "A",
-          "T"
-        ]
-      }
-    },
-    {
-      "name": "Membership inference through member_of and founder_of",
-      "description": "If A is a member of B and B was founded by C, then A is related to C",
-      "premises": [
-        {
-          "predicate": "member_of",
-          "args": [
-            "A",
-            "B"
-          ]
-        },
-        {
-          "predicate": "founder_of",
-          "args": [
-            "B",
-            "C"
-          ]
-        }
-      ],
-      "conclusion": {
-        "predicate": "related_to",
-        "args": [
-          "A",
-          "C"
+          "event1",
+          "event2"
         ]
       }
     }

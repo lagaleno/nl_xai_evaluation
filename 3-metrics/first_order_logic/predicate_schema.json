@@ -1,60 +1,68 @@
 {
   "predicates": [
     {
-      "name": "located_in",
+      "name": "Authorship",
       "args": [
         "entity",
-        "location"
+        "person"
       ],
-      "description": "An entity is located within a specific location"
+      "description": "Relates an entity to a person who created or wrote it."
     },
     {
-      "name": "type_of",
+      "name": "Location",
       "args": [
         "entity",
-        "type"
+        "place"
       ],
-      "description": "An entity belongs to a particular type or category"
+      "description": "Indicates the location of an entity."
     },
     {
-      "name": "created_by",
+      "name": "Membership",
       "args": [
-        "work",
-        "creator"
+        "entity",
+        "organization"
       ],
-      "description": "A work was created by an individual or organization"
+      "description": "Describes the membership status of an entity in an organization."
     },
     {
-      "name": "starring",
+      "name": "TypeOf",
       "args": [
-        "work",
-        "actor"
+        "entity",
+        "category"
       ],
-      "description": "A work features an actor in a starring role"
+      "description": "Specifies the type or category of an entity."
     },
     {
-      "name": "member_of",
+      "name": "PartOf",
       "args": [
-        "organization",
-        "member"
+        "entity",
+        "set"
       ],
-      "description": "An individual is a member of a particular organization"
+      "description": "Indicates that one entity is part of a larger set."
     },
     {
-      "name": "founder_of",
+      "name": "Cause",
       "args": [
-        "organization",
-        "founder"
+        "event",
+        "event"
       ],
-      "description": "An organization was founded by an individual or group"
+      "description": "Describes a causal relationship between two events."
     },
     {
-      "name": "related_to",
+      "name": "Effect",
       "args": [
-        "entity1",
-        "entity2"
+        "event",
+        "event"
       ],
-      "description": "Two entities are related in some way"
+      "description": "Specifies the outcome or consequence of an event."
+    },
+    {
+      "name": "TimeOf",
+      "args": [
+        "event",
+        "time"
+      ],
+      "description": "Indicates the time at which an event occurred."
     }
   ]
 }

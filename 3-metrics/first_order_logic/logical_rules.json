@@ -1,56 +1,76 @@
 {
   "rules": [
     {
-      "name": "Authorship inheritance",
-      "description": "An author's affiliation with an organization implies their publication is part of that organization's publications.",
+      "name": "Type Inheritance",
+      "description": "Inheriting types from entities to roles",
       "premises": [
         {
-          "predicate": "Membership",
+          "predicate": "has_type",
           "args": [
-            "person",
-            "organization"
+            "entity",
+            "type"
           ]
         },
         {
-          "predicate": "Authorship",
+          "predicate": "played_by",
           "args": [
-            "entity",
-            "person"
+            "role",
+            "actor"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "PartOf",
+        "predicate": "has_type",
         "args": [
-          "entity",
-          "organization"
+          "role",
+          "type"
         ]
       }
     },
     {
-      "name": "Event causality",
-      "description": "An event with a known cause is related to the effect of that cause.",
+      "name": "Location Association",
+      "description": "Associating entities with locations they are located at",
       "premises": [
         {
-          "predicate": "Cause",
+          "predicate": "located_at",
           "args": [
-            "event1",
-            "event2"
-          ]
-        },
-        {
-          "predicate": "TimeOf",
-          "args": [
-            "event1",
-            "time"
+            "entity",
+            "location"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "Effect",
+        "predicate": "has_type",
         "args": [
-          "event1",
-          "event2"
+          "entity",
+          "location"
+        ]
+      }
+    },
+    {
+      "name": "Role Actor Inheritance",
+      "description": "Inheriting actors from roles to works",
+      "premises": [
+        {
+          "predicate": "played_by",
+          "args": [
+            "role",
+            "actor"
+          ]
+        },
+        {
+          "predicate": "starring",
+          "args": [
+            "work",
+            "actor"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "has_type",
+        "args": [
+          "work",
+          "actor"
         ]
       }
     }

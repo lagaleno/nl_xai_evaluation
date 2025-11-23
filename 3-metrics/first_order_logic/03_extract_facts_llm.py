@@ -29,7 +29,7 @@ COL_CHUNK = "chunk"
 COL_EXPL_LIST = "explanations"  # ajuste para o nome real da coluna
 
 # Arquivo de saída com os fatos extraídos
-OUTPUT_JSONL = "facts_extracted_llm.jsonl"
+OUTPUT_JSONL = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "facts_extracted_llm.jsonl"
 
 # Modelo do LLaMA no Ollama
 LLAMA_MODEL_NAME = "llama3"

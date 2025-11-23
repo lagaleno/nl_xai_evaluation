@@ -1,68 +1,52 @@
 {
   "predicates": [
     {
-      "name": "Authorship",
+      "name": "has_type",
       "args": [
         "entity",
-        "person"
+        "type"
       ],
-      "description": "Relates an entity to a person who created or wrote it."
+      "description": "Entity has a particular type"
     },
     {
-      "name": "Location",
+      "name": "located_at",
       "args": [
         "entity",
-        "place"
+        "location"
       ],
-      "description": "Indicates the location of an entity."
+      "description": "Entity is located at a specific location"
     },
     {
-      "name": "Membership",
+      "name": "created_by",
       "args": [
-        "entity",
-        "organization"
+        "work",
+        "creator"
       ],
-      "description": "Describes the membership status of an entity in an organization."
+      "description": "Work was created by a specific creator"
     },
     {
-      "name": "TypeOf",
+      "name": "played_by",
       "args": [
-        "entity",
-        "category"
+        "role",
+        "actor"
       ],
-      "description": "Specifies the type or category of an entity."
+      "description": "Role is played by a specific actor"
     },
     {
-      "name": "PartOf",
+      "name": "married_to",
       "args": [
-        "entity",
-        "set"
+        "person1",
+        "person2"
       ],
-      "description": "Indicates that one entity is part of a larger set."
+      "description": "Person1 is married to Person2"
     },
     {
-      "name": "Cause",
+      "name": "starring",
       "args": [
-        "event",
-        "event"
+        "work",
+        "actor"
       ],
-      "description": "Describes a causal relationship between two events."
-    },
-    {
-      "name": "Effect",
-      "args": [
-        "event",
-        "event"
-      ],
-      "description": "Specifies the outcome or consequence of an event."
-    },
-    {
-      "name": "TimeOf",
-      "args": [
-        "event",
-        "time"
-      ],
-      "description": "Indicates the time at which an event occurred."
+      "description": "Work stars a specific actor"
     }
   ]
 }

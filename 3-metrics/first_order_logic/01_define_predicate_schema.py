@@ -20,7 +20,7 @@ N_EXAMPLES = 3
 LLAMA_MODEL_NAME = "llama3"
 
 # Arquivo de saída com o esquema de predicados
-SCHEMA_OUT = "predicate_schema.json"
+SCHEMA_OUT = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schema.json"
 
 # ===================================================
 

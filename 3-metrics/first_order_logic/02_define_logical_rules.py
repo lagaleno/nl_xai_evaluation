@@ -12,7 +12,7 @@ PROJECT_ROOT = THIS_FILE.parents[2]
 SCHEMA_FILE = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schema.json"
 
 # Arquivo de saída com as regras sugeridas
-RULES_OUT = "logical_rules.json"
+RULES_OUT = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "logical_rules.json"
 
 # Modelo do LLaMA no Ollama
 LLAMA_MODEL_NAME = "llama3"

@@ -1,5 +1,6 @@
 from pathlib import Path
 import importlib.util
+import os
 import shutil
 
 # THIS_FILE = .../projeto/4-experiment/main_experiment.py
@@ -26,7 +27,11 @@ HOTPOT_CSV = PROJECT_ROOT / "0-utils" / "hotpotqa_train.csv"
 EXPLAINRAG_DATASET = PROJECT_ROOT / "2-validating_dataset" / "explicability_dataset.csv"
 
 FACTS_JSONL = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "facts_extracted_llm.jsonl"
-LOGIC_RESULTS_CSV = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "logical_metrics_results.csv"
+TRIAL_FACTS_OUT_NAME = "facts_extracted_trial"
+TRIAL_FACTS_OUT = PROJECT_ROOT / "4-experiment" / TRIAL_FACTS_OUT_NAME
+LOGIC_RESULTS_CSV = PROJECT_ROOT / "4-experiment" / "logical_metrics_results.csv"
+TRIAL_LOGIC_RESULT_NAME = "logical_result_trials_out"
+TRIAL_LOGIC_RESULT = PROJECT_ROOT / "4-experiment" / TRIAL_LOGIC_RESULT_NAME
 
 N_TRIALS = 1  # número de trials da métrica lógica
 
@@ -65,8 +70,26 @@ def main():
 
     # 3) Métrica de Lógica de primeira ordem
     # 3.1) Extrair o esquema de predicados 
+    if DEFINE_PREDICATES_SCRIPT.exists():
+        run_script(DEFINE_PREDICATES_SCRIPT)
+    else:
+        print(f"⚠️ Cosine script not found at {DEFINE_PREDICATES_SCRIPT}")
+        
+    # 3.2) Extrair as regras lógicas
+    if DEFINE_LOGICALRULES_SCRIPT.exists():
+        run_script(DEFINE_LOGICALRULES_SCRIPT)
+    else:
+        print(f"⚠️ Cosine script not found at {DEFINE_LOGICALRULES_SCRIPT}") 
 
-    # 3.2) Extrair as regras lógicas 
+    # Prepara ambiente para armazenar arquivos 
+
+    # Verifica se diretórios existem apra limpar o ambiente e criar os novos diretórios
+    if os.path.isdir(TRIAL_FACTS_OUT):
+        os.rmdir(TRIAL_FACTS_OUT)
+    os.mkdir(TRIAL_FACTS_OUT)
+    if os.path.isdir(TRIAL_LOGIC_RESULT):
+        os.rmdir(TRIAL_LOGIC_RESULT)
+    os.mkdir(TRIAL_LOGIC_RESULT)
 
     # 3.3) Trials de lógica -> extrair os datos e realizar o cálculo da métria em cada trial
     for trial in range(1, N_TRIALS + 1):
@@ -81,6 +104,7 @@ def main():
                 FACTS_JSONL.stem + f"_trial{trial}" + FACTS_JSONL.suffix
             )
             shutil.copy2(FACTS_JSONL, facts_trial)
+            shutil.move(facts_trial, TRIAL_FACTS_OUT)
             print(f"Saved facts for trial {trial}: {facts_trial}")
         else:
             print(f"⚠️ Facts file not found at {FACTS_JSONL}")
@@ -93,6 +117,7 @@ def main():
                 LOGIC_RESULTS_CSV.stem + f"_trial{trial}" + LOGIC_RESULTS_CSV.suffix
             )
             shutil.copy2(LOGIC_RESULTS_CSV, results_trial)
+            shutil.move(results_trial, TRIAL_LOGIC_RESULT)
             print(f"Saved logic results for trial {trial}: {results_trial}")
         else:
             print(f"⚠️ Logic results file not found at {LOGIC_RESULTS_CSV}")

@@ -317,7 +317,8 @@ def main():
     # Resumo por label
     if not df.empty:
         print("\n📊 Summary by explanation_label:")
-        summary = df.groupby("explanation_label")[["precision", "recall", "f1"]].mean()
+        # summary = df.groupby("explanation_label")[["precision", "recall", "f1"]].mean()
+        summary = df.groupby("explanation_label")["f1"].agg(["mean", "std", "count"])
         summary.to_csv(SUMMARY_OUT)
         print(summary.to_string(float_format=lambda x: f"{x:.3f}"))
 

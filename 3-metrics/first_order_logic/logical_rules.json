@@ -1,31 +1,3 @@
 {
-  "rules": [
-    {
-      "name": "Marriage Transitivity",
-      "description": "If a person is married to another, and that person is also married to someone else, then the original person is married to that other person.",
-      "premises": [
-        {
-          "predicate": "married_to",
-          "args": [
-            "p1",
-            "p2"
-          ]
-        },
-        {
-          "predicate": "married_to",
-          "args": [
-            "p2",
-            "p3"
-          ]
-        }
-      ],
-      "conclusion": {
-        "predicate": "married_to",
-        "args": [
-          "p1",
-          "p3"
-        ]
-      }
-    }
-  ]
+  "rules": []
 }

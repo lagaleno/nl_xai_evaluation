@@ -1,44 +1,53 @@
 {
   "predicates": [
     {
-      "name": "located_in",
+      "name": "type",
       "args": [
         "entity",
-        "location"
+        "person",
+        "work"
       ],
-      "description": "Indicates a location where an entity is situated."
+      "description": "The type of an entity"
     },
     {
-      "name": "has_type",
+      "name": "authorship",
       "args": [
         "entity",
-        "type"
+        "person"
       ],
-      "description": "Specifies the type of an entity."
+      "description": "A person is the author of a work"
     },
     {
-      "name": "created_by",
+      "name": "membership",
       "args": [
-        "work",
-        "creator"
+        "entity",
+        "group"
       ],
-      "description": "Attributes a work to its creator."
+      "description": "An entity is a member of a group"
     },
     {
-      "name": "starred_in",
+      "name": "location",
       "args": [
-        "actor",
-        "film"
+        "entity",
+        "place"
       ],
-      "description": "Indicates an actor's appearance in a film."
+      "description": "A location where an event or activity takes place"
     },
     {
-      "name": "married_to",
+      "name": "relation",
       "args": [
-        "person1",
-        "person2"
+        "person",
+        "person"
       ],
-      "description": "Specifies a marital relationship between two people."
+      "description": "Two people have a specific relation (e.g. marriage, friendship)"
+    },
+    {
+      "name": "participation",
+      "args": [
+        "entity",
+        "event"
+      ],
+      "description": "An entity participates in an event"
     }
   ]
 }

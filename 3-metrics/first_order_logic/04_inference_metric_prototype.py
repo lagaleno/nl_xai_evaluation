@@ -18,6 +18,7 @@ FACTS_JSONL = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "facts_extracte
 
 # Arquivo de saída com métricas por explicação
 OUTPUT_CSV = "logical_metrics_results.csv"
+SUMMARY_OUT = "logical_metrics_summary_results.csv"
 
 # Tipo para um fato: (nome_predicado, (arg1, arg2, ...))
 Fact = Tuple[str, Tuple[str, ...]]
@@ -317,6 +318,7 @@ def main():
     if not df.empty:
         print("\n📊 Summary by explanation_label:")
         summary = df.groupby("explanation_label")[["precision", "recall", "f1"]].mean()
+        summary.to_csv(SUMMARY_OUT)
         print(summary.to_string(float_format=lambda x: f"{x:.3f}"))
 
 

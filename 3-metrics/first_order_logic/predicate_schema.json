@@ -1,20 +1,20 @@
 {
   "predicates": [
     {
+      "name": "located_in",
+      "args": [
+        "entity",
+        "location"
+      ],
+      "description": "Indicates a location where an entity is situated."
+    },
+    {
       "name": "has_type",
       "args": [
         "entity",
         "type"
       ],
-      "description": "Entity has a particular type"
-    },
-    {
-      "name": "located_at",
-      "args": [
-        "entity",
-        "location"
-      ],
-      "description": "Entity is located at a specific location"
+      "description": "Specifies the type of an entity."
     },
     {
       "name": "created_by",
@@ -22,15 +22,15 @@
         "work",
         "creator"
       ],
-      "description": "Work was created by a specific creator"
+      "description": "Attributes a work to its creator."
     },
     {
-      "name": "played_by",
+      "name": "starred_in",
       "args": [
-        "role",
-        "actor"
+        "actor",
+        "film"
       ],
-      "description": "Role is played by a specific actor"
+      "description": "Indicates an actor's appearance in a film."
     },
     {
       "name": "married_to",
@@ -38,15 +38,7 @@
         "person1",
         "person2"
       ],
-      "description": "Person1 is married to Person2"
-    },
-    {
-      "name": "starring",
-      "args": [
-        "work",
-        "actor"
-      ],
-      "description": "Work stars a specific actor"
+      "description": "Specifies a marital relationship between two people."
     }
   ]
 }

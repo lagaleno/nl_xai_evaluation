@@ -1,76 +1,29 @@
 {
   "rules": [
     {
-      "name": "Type Inheritance",
-      "description": "Inheriting types from entities to roles",
+      "name": "Marriage Transitivity",
+      "description": "If a person is married to another, and that person is also married to someone else, then the original person is married to that other person.",
       "premises": [
         {
-          "predicate": "has_type",
+          "predicate": "married_to",
           "args": [
-            "entity",
-            "type"
+            "p1",
+            "p2"
           ]
         },
         {
-          "predicate": "played_by",
+          "predicate": "married_to",
           "args": [
-            "role",
-            "actor"
+            "p2",
+            "p3"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "has_type",
+        "predicate": "married_to",
         "args": [
-          "role",
-          "type"
-        ]
-      }
-    },
-    {
-      "name": "Location Association",
-      "description": "Associating entities with locations they are located at",
-      "premises": [
-        {
-          "predicate": "located_at",
-          "args": [
-            "entity",
-            "location"
-          ]
-        }
-      ],
-      "conclusion": {
-        "predicate": "has_type",
-        "args": [
-          "entity",
-          "location"
-        ]
-      }
-    },
-    {
-      "name": "Role Actor Inheritance",
-      "description": "Inheriting actors from roles to works",
-      "premises": [
-        {
-          "predicate": "played_by",
-          "args": [
-            "role",
-            "actor"
-          ]
-        },
-        {
-          "predicate": "starring",
-          "args": [
-            "work",
-            "actor"
-          ]
-        }
-      ],
-      "conclusion": {
-        "predicate": "has_type",
-        "args": [
-          "work",
-          "actor"
+          "p1",
+          "p3"
         ]
       }
     }

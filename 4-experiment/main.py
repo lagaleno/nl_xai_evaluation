@@ -30,8 +30,10 @@ FACTS_JSONL = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "facts_extracte
 TRIAL_FACTS_OUT_NAME = "facts_extracted_trial"
 TRIAL_FACTS_OUT = PROJECT_ROOT / "4-experiment" / TRIAL_FACTS_OUT_NAME
 LOGIC_RESULTS_CSV = PROJECT_ROOT / "4-experiment" / "logical_metrics_results.csv"
+LOGIC_RESULTS_SUMMARY_CSV = PROJECT_ROOT / "4-experiment" / "logical_metrics_summary_results.csv"
 TRIAL_LOGIC_RESULT_NAME = "logical_result_trials_out"
 TRIAL_LOGIC_RESULT = PROJECT_ROOT / "4-experiment" / TRIAL_LOGIC_RESULT_NAME
+TRIAL_LOGIC_SUMMARY_RESULT = PROJECT_ROOT / "4-experiment" / "logical_summary_results_trials_out"
 
 N_TRIALS = 1  # número de trials da métrica lógica
 
@@ -85,11 +87,14 @@ def main():
 
     # Verifica se diretórios existem apra limpar o ambiente e criar os novos diretórios
     if os.path.isdir(TRIAL_FACTS_OUT):
-        os.rmdir(TRIAL_FACTS_OUT)
+        shutil.rmtree(TRIAL_FACTS_OUT)
     os.mkdir(TRIAL_FACTS_OUT)
     if os.path.isdir(TRIAL_LOGIC_RESULT):
-        os.rmdir(TRIAL_LOGIC_RESULT)
+        shutil.rmtree(TRIAL_LOGIC_RESULT)
     os.mkdir(TRIAL_LOGIC_RESULT)
+    if os.path.isdir(TRIAL_LOGIC_SUMMARY_RESULT):
+        shutil.rmtree(TRIAL_LOGIC_SUMMARY_RESULT)
+    os.mkdir(TRIAL_LOGIC_SUMMARY_RESULT)
 
     # 3.3) Trials de lógica -> extrair os datos e realizar o cálculo da métria em cada trial
     for trial in range(1, N_TRIALS + 1):
@@ -121,6 +126,16 @@ def main():
             print(f"Saved logic results for trial {trial}: {results_trial}")
         else:
             print(f"⚠️ Logic results file not found at {LOGIC_RESULTS_CSV}")
+
+        if LOGIC_RESULTS_SUMMARY_CSV.exists():
+            results_summary_trial = LOGIC_RESULTS_SUMMARY_CSV.with_name(
+                LOGIC_RESULTS_SUMMARY_CSV.stem + f"_trial{trial}" + LOGIC_RESULTS_SUMMARY_CSV.suffix
+            )
+            shutil.copy2(LOGIC_RESULTS_SUMMARY_CSV, results_summary_trial)
+            shutil.move(results_summary_trial, TRIAL_LOGIC_SUMMARY_RESULT)
+            print(f"Saved logic results for trial {trial}: {results_summary_trial}")
+        else:
+            print(f"⚠️ Logic results file not found at {TRIAL_LOGIC_SUMMARY_RESULT}")
 
     print("\n✅ Main experiment finished.")
 

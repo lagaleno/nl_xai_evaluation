@@ -151,11 +151,18 @@ IMPORTANT RULES:
 
 DEFINITION OF THE THREE EXPLANATIONS:
 1) **CORRECT** – A complete and fully supported explanation that contains all essential reasoning.
-2) **INCOMPLETE** – A plausible explanation that sounds natural but deliberately omits at least one essential supporting fact.  
-   - The explanation MUST NOT state or imply that something is missing.  
-   - It should feel like a normal explanation but be partially insufficient.
-   - The explanation MUST use FEWER supporting facts than the correct explanation.
-   - The explanation MUST be SHORTER than the correct explanation (for example, about half as many details).
+2) **INCOMPLETE** 
+    – A plausible explanation that sounds natural but deliberately omits at least one essential supporting fact.  
+    - Your explanation must use only part of the factual information contained in the chunk.
+    - It should sound plausible, but it must omit at least one key fact present in the chunk.
+    - Do not mention that information is missing.
+    - Do not hint that the explanation is incomplete.
+    - Do not compensate by adding other facts.
+    - Keep it short
+    - The explanation MUST NOT state or imply that something is missing.  
+    - It should feel like a normal explanation but be partially insufficient.
+    - The explanation MUST use FEWER supporting facts than the correct explanation.
+    - The explanation MUST be SHORTER than the correct explanation (for example, about half as many details).
 3) **INCORRECT** – An explanation that contains at least one unsupported or contradictory statement, but still written naturally (no meta-talk).
 
 OUTPUT FORMAT:

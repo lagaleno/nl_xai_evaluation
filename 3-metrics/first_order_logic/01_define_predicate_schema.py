@@ -147,23 +147,35 @@ def call_llama(prompt: str) -> str:
 
 def parse_schema(raw_output: str):
     """
-    Tenta extrair o JSON do output do LLaMA.
-    Se o modelo já retornar apenas JSON, é só usar json.loads direto.
-    Se vier com texto antes/depois, seria preciso ajustar esta função.
+    Extrai o bloco JSON de dentro da saída do LLM.
+
+    - Procura o primeiro '{' e o último '}'.
+    - Tenta fazer json.loads nesse intervalo.
+    - Se não der certo, mostra a saída bruta para depuração.
     """
-    raw_output = raw_output.strip()
+    text = raw_output.strip()
+
+    start = text.find("{")
+    end = text.rfind("}")
+
+    if start == -1 or end == -1 or end < start:
+        print("⚠️ Could not find a valid JSON block in the LLaMA output.")
+        print("Raw output:")
+        print(text)
+        raise ValueError("No JSON block found in LLaMA output.")
+
+    json_str = text[start:end + 1]
 
     # Tenta parsear diretamente
     try:
-        data = json.loads(raw_output)
+        data = json.loads(json_str)
         return data
-    except json.JSONDecodeError:
-        # Caso o modelo coloque texto extra, você pode tentar heurísticas:
-        # - procurar o primeiro '{' e o último '}' e tentar parsear esse trecho
-        print("⚠️ Could not parse output as pure JSON. Raw output:")
-        print(raw_output)
+    except json.JSONDecodeError as e:
+        print("⚠️ Failed to parse JSON block. Error:")
+        print(e)
+        print("Extracted JSON candidate:")
+        print(json_str)
         raise
-
 
 def main():
 

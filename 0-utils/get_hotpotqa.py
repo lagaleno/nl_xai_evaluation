@@ -5,7 +5,7 @@ import pandas as pd
 
 
 # Quantidade de amostras de HotpotQA
-N_SAMPLES = 10
+N_SAMPLES = 50
 
 SEED = 42
 random.seed(SEED)

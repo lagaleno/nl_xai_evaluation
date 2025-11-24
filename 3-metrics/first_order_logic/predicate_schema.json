@@ -1,44 +1,35 @@
 {
-  "predicates": [
+  "title": [
+    "Question",
+    "Answer"
+  ],
+  "sentences": [
     {
-      "name": "LOCATED_AT",
-      "args": [
-        "entity",
-        "location"
-      ],
-      "description": "Entity is located at a specific location"
+      "type": "logical",
+      "predicates": [
+        {
+          "subject": "factoid",
+          "predicate": "multi-hop"
+        },
+        {
+          "subject": "question",
+          "predicate": "answer"
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "factoid",
+      "type": "string"
     },
     {
-      "name": "AUTHORED_BY",
-      "args": [
-        "work",
-        "author"
-      ],
-      "description": "Work was authored by the given author"
+      "name": "question",
+      "type": "string"
     },
     {
-      "name": "PART_OF",
-      "args": [
-        "entity",
-        "group"
-      ],
-      "description": "Entity is part of a specific group or category"
-    },
-    {
-      "name": "RELATED_TO",
-      "args": [
-        "entity1",
-        "entity2"
-      ],
-      "description": "Entity1 has some relation to entity2 (e.g., spouse, colleague, etc.)"
-    },
-    {
-      "name": "FILMED_IN",
-      "args": [
-        "film",
-        "location"
-      ],
-      "description": "Film was filmed in a specific location"
+      "name": "answer",
+      "type": "string"
     }
   ]
 }

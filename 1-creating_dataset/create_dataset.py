@@ -4,10 +4,16 @@ import time
 import random
 from typing import Dict, Any, List
 import ast
+from pathlib import Path
 
 import requests
 from tqdm.auto import tqdm
 import pandas as pd
+
+THIS_FILE = Path(__file__).resolve()
+
+# PROJECT_ROOT = .../projeto
+PROJECT_ROOT = THIS_FILE.parent.parent
 
 # ==========================
 # 1) CONFIGURAÇÕES GERAIS
@@ -23,8 +29,8 @@ SEED = 42
 random.seed(SEED)
 
 # Arquivos de saída
-JSONL_OUT = "explainrag_hotpot_llama.jsonl"
-CSV_SUMMARY_OUT = "explainrag_hotpot_llama_summary.csv"
+JSONL_OUT = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama.jsonl"
+CSV_SUMMARY_OUT = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama_summary.csv"
 
 # ==========================
 # 2) CHAMADA AO LLaMA (Ollama)

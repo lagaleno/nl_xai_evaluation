@@ -2,7 +2,12 @@ import requests
 from datasets import load_dataset
 import random
 import pandas as pd
+from pathlib import Path
 
+THIS_FILE = Path(__file__).resolve()
+
+# PROJECT_ROOT = .../projeto
+PROJECT_ROOT = THIS_FILE.parent.parent
 
 # Quantidade de amostras de HotpotQA
 N_SAMPLES = 10
@@ -11,7 +16,7 @@ SEED = 42
 random.seed(SEED)
 
 # Arquivo de saída
-HOTPOTQA_OUT = "hotpotqa_train.csv"
+HOTPOTQA_OUT = PROJECT_ROOT / "0-utils" / "hotpotqa_train.csv"
 
 # ==========================
 # CARREGAR HOTPOTQA

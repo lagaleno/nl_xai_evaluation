@@ -1,83 +1,22 @@
 {
   "rules": [
     {
-      "name": "Transitive Part-Of",
-      "description": "If A is part of B, and B is part of C, then A is part of C",
+      "name": "FounderOrganization",
+      "description": "If an organization was founded by someone, that person is the founder of that organization.",
       "premises": [
         {
-          "predicate": "part_of",
+          "predicate": "FoundedBy",
           "args": [
-            "A",
-            "B"
-          ]
-        },
-        {
-          "predicate": "part_of",
-          "args": [
-            "B",
-            "C"
+            "organization",
+            "founder"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "part_of",
+        "predicate": "CreatedBy",
         "args": [
-          "A",
-          "C"
-        ]
-      }
-    },
-    {
-      "name": "Location Inheritance",
-      "description": "If A is located in B, and B is located in C, then A is located in C",
-      "premises": [
-        {
-          "predicate": "located_in",
-          "args": [
-            "A",
-            "B"
-          ]
-        },
-        {
-          "predicate": "located_in",
-          "args": [
-            "B",
-            "C"
-          ]
-        }
-      ],
-      "conclusion": {
-        "predicate": "located_in",
-        "args": [
-          "A",
-          "C"
-        ]
-      }
-    },
-    {
-      "name": "Type Inheritance",
-      "description": "If A is of type B, and B is of type C, then A is of type C",
-      "premises": [
-        {
-          "predicate": "type_of",
-          "args": [
-            "A",
-            "B"
-          ]
-        },
-        {
-          "predicate": "type_of",
-          "args": [
-            "B",
-            "C"
-          ]
-        }
-      ],
-      "conclusion": {
-        "predicate": "type_of",
-        "args": [
-          "A",
-          "C"
+          "organization",
+          "founder"
         ]
       }
     }

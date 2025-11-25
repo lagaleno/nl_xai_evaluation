@@ -1,44 +1,44 @@
 {
   "predicates": [
     {
-      "name": "located_in",
+      "name": "LocatedAt",
       "args": [
         "entity",
         "location"
       ],
-      "description": "Entity is located at a specific location"
+      "description": "An entity is located at a specific location."
     },
     {
-      "name": "part_of",
+      "name": "TypeOf",
       "args": [
-        "whole",
-        "part"
+        "entity",
+        "type"
       ],
-      "description": "The part is contained within the whole"
+      "description": "An entity has a certain type or category."
     },
     {
-      "name": "type_of",
+      "name": "CreatedBy",
       "args": [
-        "instance",
-        "category"
+        "entity",
+        "creator"
       ],
-      "description": "The instance is an example of a specific category"
+      "description": "An entity was created by a specific person or organization."
     },
     {
-      "name": "created_by",
-      "args": [
-        "creator",
-        "work"
-      ],
-      "description": "The work was created by the specified creator"
-    },
-    {
-      "name": "played_by",
+      "name": "StarredIn",
       "args": [
         "actor",
-        "role"
+        "film"
       ],
-      "description": "The actor played a specific role in a performance or film"
+      "description": "An actor starred in a film or movie."
+    },
+    {
+      "name": "FoundedBy",
+      "args": [
+        "organization",
+        "founder"
+      ],
+      "description": "An organization was founded by a specific person or group of people."
     }
   ]
 }

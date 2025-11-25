@@ -205,6 +205,17 @@ def main():
     print("\n📊 Resumo por label (média / desvio padrão / n):")
     print(summary)
 
+    # Checa validade pela média da métrica de F1
+    f1_correct = summary["f1"]["mean"].loc["correct"]
+    f1_incomplete = summary["f1"]["mean"].loc["incomplete"]
+    f1_incorrect = summary["f1"]["mean"].loc["incorrect"]
+
+    is_valid = (f1_correct > f1_incomplete) and (f1_incomplete > f1_incorrect)
+
+    if is_valid:
+        print("✅ Dataset ordering valid? ", is_valid)
+    else:
+        print("❌ Dataset ordering valid? ", is_valid)
     # ============ Gráficos ============
 
     # F1 por label
@@ -245,6 +256,6 @@ def main():
 
     print("\n✅ Avaliação concluída.")
 
-
+    return is_valid
 if __name__ == "__main__":
     main()

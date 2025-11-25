@@ -1,6 +1,8 @@
 import json
 import os
 import subprocess
+import requests
+
 from pathlib import Path
 
 # ================== CONFIGURAÇÕES ==================
@@ -176,25 +178,49 @@ def validate_and_filter_rules(schema: dict, rules_obj: dict) -> dict:
 
 
 
-def call_llama(prompt: str) -> str:
+def call_llama(prompt: str, temperature: float = 0.5) -> str:
     """
     Chama o modelo LLaMA via Ollama na linha de comando.
     Ajuste LLAMA_MODEL_NAME conforme seu setup.
     """
     print("🧠 Calling LLaMA to propose logical rules...")
-    result = subprocess.run(
-        ["ollama", "run", LLAMA_MODEL_NAME],
-        input=prompt,
-        text=True,
-        capture_output=True,
-    )
+    # result = subprocess.run(
+    #     ["ollama", "run", LLAMA_MODEL_NAME],
+    #     input=prompt,
+    #     text=True,
+    #     capture_output=True,
+    # )
 
-    if result.returncode != 0:
+    """
+        Chama o modelo LLaMA via Ollama (http://localhost:11434/api/chat)
+        e tenta interpretar a saída como JSON.
+    """
+    url = "http://localhost:11434/api/chat"
+
+    data = {
+        "model": LLAMA_MODEL_NAME,
+        "messages": [
+            {"role": "system", "content": prompt},
+        ],
+        "options": {
+            "temperature": temperature,
+        },
+        "stream": False
+    }
+    resp = requests.post(url, json=data)
+    resp.raise_for_status()
+
+    if not resp:
         print("❌ Error calling LLaMA:")
-        print(result.stderr)
+        print(resp.stderr)
         raise RuntimeError("LLaMA call failed")
+    
+    out = resp.json()
 
-    return result.stdout
+    # Ollama retorna algo como {"message": {"role": "...", "content": "..."}, ...}
+    text = out["message"]["content"].strip()
+
+    return text
 
 
 def parse_rules(raw_output: str):

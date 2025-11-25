@@ -2,6 +2,7 @@ import json
 import os
 import random
 import subprocess
+import requests
 
 import pandas as pd
 from pathlib import Path
@@ -122,7 +123,7 @@ Now propose the predicate schema in the JSON format described above having ONLY 
     return prompt.strip()
 
 
-def call_llama(prompt: str) -> str:
+def call_llama(prompt: str, temperature: float = 0.5) -> str:
     """
     Chama o modelo LLaMA via Ollama na linha de comando.
     Se você usar outra interface, adapte esta função.
@@ -130,19 +131,42 @@ def call_llama(prompt: str) -> str:
     print("🧠 Calling LLaMA to propose predicate schema...")
     # Comando básico do Ollama: `echo "prompt" | ollama run model`
     # Aqui usamos subprocess para passar o prompt via stdin.
-    result = subprocess.run(
-        ["ollama", "run", LLAMA_MODEL_NAME],
-        input=prompt,
-        text=True,
-        capture_output=True,
-    )
+    # result = subprocess.run(
+    #     ["ollama", "run", LLAMA_MODEL_NAME],
+    #     input=prompt,
+    #     text=True,
+    #     capture_output=True,
+    # )
+    """
+        Chama o modelo LLaMA via Ollama (http://localhost:11434/api/chat)
+        e tenta interpretar a saída como JSON.
+    """
+    url = "http://localhost:11434/api/chat"
 
-    if result.returncode != 0:
+    data = {
+        "model": LLAMA_MODEL_NAME,
+        "messages": [
+            {"role": "system", "content": prompt},
+        ],
+        "options": {
+            "temperature": temperature,
+        },
+        "stream": False
+    }
+    resp = requests.post(url, json=data)
+    resp.raise_for_status()
+
+    if not resp:
         print("❌ Error calling LLaMA:")
-        print(result.stderr)
+        print(resp.stderr)
         raise RuntimeError("LLaMA call failed")
+    
+    out = resp.json()
 
-    return result.stdout
+    # Ollama retorna algo como {"message": {"role": "...", "content": "..."}, ...}
+    text = out["message"]["content"].strip()
+
+    return text
 
 
 def parse_schema(raw_output: str):

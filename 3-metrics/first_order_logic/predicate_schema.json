@@ -1,35 +1,44 @@
 {
-  "title": [
-    "Question",
-    "Answer"
-  ],
-  "sentences": [
+  "predicates": [
     {
-      "type": "logical",
-      "predicates": [
-        {
-          "subject": "factoid",
-          "predicate": "multi-hop"
-        },
-        {
-          "subject": "question",
-          "predicate": "answer"
-        }
-      ]
-    }
-  ],
-  "fields": [
-    {
-      "name": "factoid",
-      "type": "string"
+      "name": "type_of",
+      "args": [
+        "entity",
+        "type"
+      ],
+      "description": "Describes the type of an entity"
     },
     {
-      "name": "question",
-      "type": "string"
+      "name": "location_in",
+      "args": [
+        "entity",
+        "place"
+      ],
+      "description": "Indicates a location where something is situated"
     },
     {
-      "name": "answer",
-      "type": "string"
+      "name": "author_of",
+      "args": [
+        "work",
+        "person"
+      ],
+      "description": "Describes the author of a work"
+    },
+    {
+      "name": "married_to",
+      "args": [
+        "person1",
+        "person2"
+      ],
+      "description": "Indicates a marital relationship between two people"
+    },
+    {
+      "name": "starred_in",
+      "args": [
+        "entity",
+        "film"
+      ],
+      "description": "Describes an actor's role in a film"
     }
   ]
 }

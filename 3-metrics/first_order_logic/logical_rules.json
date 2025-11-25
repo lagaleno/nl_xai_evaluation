@@ -1,3 +1,44 @@
 {
-  "rules": []
+  "rules": [
+    {
+      "name": "Type of author",
+      "description": "If a person is an author, then their type is 'person'",
+      "premises": [
+        {
+          "predicate": "author_of",
+          "args": [
+            "work",
+            "person"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "type_of",
+        "args": [
+          "person",
+          "person"
+        ]
+      }
+    },
+    {
+      "name": "Location of a film",
+      "description": "If an entity starred in a film, then the location is where the film was made",
+      "premises": [
+        {
+          "predicate": "starred_in",
+          "args": [
+            "entity",
+            "film"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "location_in",
+        "args": [
+          "entity",
+          "film"
+        ]
+      }
+    }
+  ]
 }

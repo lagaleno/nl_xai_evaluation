@@ -4,6 +4,8 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Dict, List, Any
+import requests
+
 
 import pandas as pd
 from pathlib import Path
@@ -96,23 +98,47 @@ Here is the {source_type} text:
     return prompt.strip()
 
 
-def call_llama(prompt: str) -> str:
+def call_llama(prompt: str,  temperature: float = 0.5) -> str:
     """
     Chama o modelo LLaMA via Ollama.
     """
-    result = subprocess.run(
-        ["ollama", "run", LLAMA_MODEL_NAME],
-        input=prompt,
-        text=True,
-        capture_output=True,
-    )
+    # result = subprocess.run(
+    #     ["ollama", "run", LLAMA_MODEL_NAME],
+    #     input=prompt,
+    #     text=True,
+    #     capture_output=True,
+    # )
 
-    if result.returncode != 0:
+    """
+        Chama o modelo LLaMA via Ollama (http://localhost:11434/api/chat)
+        e tenta interpretar a saída como JSON.
+    """
+    url = "http://localhost:11434/api/chat"
+
+    data = {
+        "model": LLAMA_MODEL_NAME,
+        "messages": [
+            {"role": "system", "content": prompt},
+        ],
+        "options": {
+            "temperature": temperature,
+        },
+        "stream": False
+    }
+    resp = requests.post(url, json=data)
+    resp.raise_for_status()
+
+    if not resp:
         print("❌ Error calling LLaMA:")
-        print(result.stderr)
+        print(resp.stderr)
         raise RuntimeError("LLaMA call failed")
+    
+    out = resp.json()
 
-    return result.stdout
+    # Ollama retorna algo como {"message": {"role": "...", "content": "..."}, ...}
+    text = out["message"]["content"].strip()
+
+    return text
 
 
 def parse_facts_output(raw_output: str) -> List[Dict[str, Any]]:

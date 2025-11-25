@@ -5,7 +5,7 @@ import pandas as pd
 
 
 # Quantidade de amostras de HotpotQA
-N_SAMPLES = 50
+N_SAMPLES = 10
 
 SEED = 42
 random.seed(SEED)
@@ -18,8 +18,14 @@ HOTPOTQA_OUT = "hotpotqa_train.csv"
 # ==========================
 
 print("📥 Carregando HotpotQA...")
-ds = load_dataset("hotpot_qa", "distractor")
-train = ds["train"].shuffle(seed=SEED).select(range(min(N_SAMPLES, len(ds["train"]))))
-print(train)
-
-pd.DataFrame(train).to_csv(HOTPOTQA_OUT, index=False)
+try:
+    ds = load_dataset("hotpot_qa", "distractor")
+    print(ds)
+    train = ds["train"].shuffle(seed=SEED).select(range(min(N_SAMPLES, len(ds["train"]))))
+except:
+    ds = load_dataset('parquet', data_files='original_backup.parquet')
+    print(ds)
+    train = ds["train"].shuffle(seed=SEED).select(range(min(N_SAMPLES, len(ds["train"]))))
+finally:
+    print(train)
+    pd.DataFrame(train).to_csv(HOTPOTQA_OUT, index=False)

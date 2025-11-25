@@ -21,7 +21,7 @@ LLAMA_MODEL_NAME = "llama3"
 
 # Quantidade alvo de regras (apenas para orientar o LLM)
 TARGET_MIN_RULES = 3
-TARGET_MAX_RULES = 7
+TARGET_MAX_RULES = 12
 
 # ===================================================
 

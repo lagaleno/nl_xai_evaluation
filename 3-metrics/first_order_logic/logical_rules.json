@@ -1,42 +1,83 @@
 {
   "rules": [
     {
-      "name": "Type of author",
-      "description": "If a person is an author, then their type is 'person'",
+      "name": "Transitive Part-Of",
+      "description": "If A is part of B, and B is part of C, then A is part of C",
       "premises": [
         {
-          "predicate": "author_of",
+          "predicate": "part_of",
           "args": [
-            "work",
-            "person"
+            "A",
+            "B"
+          ]
+        },
+        {
+          "predicate": "part_of",
+          "args": [
+            "B",
+            "C"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "part_of",
+        "args": [
+          "A",
+          "C"
+        ]
+      }
+    },
+    {
+      "name": "Location Inheritance",
+      "description": "If A is located in B, and B is located in C, then A is located in C",
+      "premises": [
+        {
+          "predicate": "located_in",
+          "args": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "predicate": "located_in",
+          "args": [
+            "B",
+            "C"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "located_in",
+        "args": [
+          "A",
+          "C"
+        ]
+      }
+    },
+    {
+      "name": "Type Inheritance",
+      "description": "If A is of type B, and B is of type C, then A is of type C",
+      "premises": [
+        {
+          "predicate": "type_of",
+          "args": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "predicate": "type_of",
+          "args": [
+            "B",
+            "C"
           ]
         }
       ],
       "conclusion": {
         "predicate": "type_of",
         "args": [
-          "person",
-          "person"
-        ]
-      }
-    },
-    {
-      "name": "Location of a film",
-      "description": "If an entity starred in a film, then the location is where the film was made",
-      "premises": [
-        {
-          "predicate": "starred_in",
-          "args": [
-            "entity",
-            "film"
-          ]
-        }
-      ],
-      "conclusion": {
-        "predicate": "location_in",
-        "args": [
-          "entity",
-          "film"
+          "A",
+          "C"
         ]
       }
     }

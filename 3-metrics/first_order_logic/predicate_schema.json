@@ -1,44 +1,44 @@
 {
   "predicates": [
     {
+      "name": "located_in",
+      "args": [
+        "entity",
+        "location"
+      ],
+      "description": "Entity is located at a specific location"
+    },
+    {
+      "name": "part_of",
+      "args": [
+        "whole",
+        "part"
+      ],
+      "description": "The part is contained within the whole"
+    },
+    {
       "name": "type_of",
       "args": [
-        "entity",
-        "type"
+        "instance",
+        "category"
       ],
-      "description": "Describes the type of an entity"
+      "description": "The instance is an example of a specific category"
     },
     {
-      "name": "location_in",
+      "name": "created_by",
       "args": [
-        "entity",
-        "place"
+        "creator",
+        "work"
       ],
-      "description": "Indicates a location where something is situated"
+      "description": "The work was created by the specified creator"
     },
     {
-      "name": "author_of",
+      "name": "played_by",
       "args": [
-        "work",
-        "person"
+        "actor",
+        "role"
       ],
-      "description": "Describes the author of a work"
-    },
-    {
-      "name": "married_to",
-      "args": [
-        "person1",
-        "person2"
-      ],
-      "description": "Indicates a marital relationship between two people"
-    },
-    {
-      "name": "starred_in",
-      "args": [
-        "entity",
-        "film"
-      ],
-      "description": "Describes an actor's role in a film"
+      "description": "The actor played a specific role in a performance or film"
     }
   ]
 }

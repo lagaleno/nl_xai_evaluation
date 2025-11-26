@@ -249,8 +249,7 @@ def main():
 
     predicate_config = {
         "prompt": prompt,
-        "list_predicates": schema["predicates"],
-        "qtt_predicates": len(schema["predicates"]),
+        "list_predicates": schema,
         "model": LLAMA_MODEL_NAME,
         "number_examples": N_EXAMPLES,
         "qa_examples_id": EXAMPLES_ID,

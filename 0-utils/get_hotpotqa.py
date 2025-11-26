@@ -12,11 +12,12 @@ THIS_FILE = Path(__file__).resolve()
 PROJECT_ROOT = THIS_FILE.parent.parent
 
 # Quantidade de amostras de HotpotQA
-N_SAMPLES = 500
+N_SAMPLES = 50
 
 SEED = 42
 random.seed(SEED)
 
+BACKUP_DS = PROJECT_ROOT / "0-utils" / "original_backup.parquet"
 # Arquivo de saída
 HOTPOTQA_OUT = PROJECT_ROOT / "0-utils" / "hotpotqa_train.csv"
 
@@ -43,7 +44,8 @@ if not HOTPOTQA_OUT.exists():
         print(ds)
         train = ds["train"].shuffle(seed=SEED).select(range(min(N_SAMPLES, len(ds["train"]))))
     except:
-        ds = load_dataset('parquet', data_files='original_backup.parquet')
+        print("oi")
+        ds = load_dataset('parquet', data_files=str(BACKUP_DS))
         print(ds)
         train = ds["train"].shuffle(seed=SEED).select(range(min(N_SAMPLES, len(ds["train"]))))
     finally:

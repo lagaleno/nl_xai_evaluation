@@ -25,12 +25,12 @@ PROJECT_ROOT = THIS_FILE.parent.parent
 LLAMA_MODEL = "llama3"  # troque se usar outro (ex: "llama3:8b")
 
 # Quantidade de amostras de HotpotQA
-N_SAMPLES = 1   # começa com 10 ou 30 pra validar
+N_SAMPLES = 100   # começa com 10 ou 30 pra validar
 
 SEED = 42
 random.seed(SEED)
 
-TEMPERATURE = 0.4
+TEMPERATURE = 0.5
 
 # Arquivos de saída
 JSONL_OUT = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama.jsonl"

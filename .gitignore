@@ -74,6 +74,7 @@ db-data/
 ##############################
 .DS_Store
 Thumbs.db
+original_backup.parquet
 
 ##############################
 # SENSITIVE CONFIG FILES     #

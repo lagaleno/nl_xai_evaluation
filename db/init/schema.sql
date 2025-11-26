@@ -4,7 +4,7 @@ CREATE TABLE experiment (
     hotpot_path VARCHAR(255),
     seed INT,
     n_samples INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     jaccard_summary JSON,
     cosine_summary JSON,
     logic_summary JSON

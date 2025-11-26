@@ -2,6 +2,9 @@ from pathlib import Path
 import importlib.util
 import os
 import shutil
+import sys
+
+
 
 # THIS_FILE = .../projeto/4-experiment/main_experiment.py
 THIS_FILE = Path(__file__).resolve()
@@ -9,8 +12,14 @@ THIS_FILE = Path(__file__).resolve()
 # PROJECT_ROOT = .../projeto
 PROJECT_ROOT = THIS_FILE.parent.parent
 
+# garantir que o Python enxergue a raiz do projeto para importar 'provenance'
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
 print("THIS_FILE:", THIS_FILE)
 print("PROJECT_ROOT:", PROJECT_ROOT)
+
+from provenance import ProvenanceDB  
 
 # ===== CAMINHO DOS SCRIPTS =====
 GET_HOTPOTQA_SCRIPT = PROJECT_ROOT / "0-utils" / "get_hotpotqa.py"
@@ -61,18 +70,26 @@ def run_script(path: Path, func_name: str | None = "main"):
    
 
 def main():
+    # ==============================
+    # 1) MARCAR INÍCIO DO EXPERIMENTO NO BANCO
+    # ==============================
+    prov = ProvenanceDB()
+
+    experiment_id = prov.create_experiment(
+        hotpot_path="",
+        seed=0,
+        n_samples=0,
+    )
+
+    print(f"🧪 Experiment started with id={experiment_id}")
+
+    # deixar o experiment_id disponível pros outros scripts via variável de ambiente
+    os.environ["EXPERIMENT_ID"] = str(experiment_id)
     print("======== Set up the enviroment ========")
 
-    if not HOTPOT_CSV.exists():
-        print(f"✍️ Getting HOTPOTQA from Hugginface")
-        run_script(GET_HOTPOTQA_SCRIPT)
-    else:
-        print(f"📝 Using an existing version of the Hotpotqa dataset")
-    if not (EXPLAINRAG_DATASET_CSV.exists() or EXPLAINRAG_DATASET_JSONL.exists()):
-        print(f"✍️ Creating Explainability dataset")
-        run_script(CREATE_DATASET_SCRIPT)
-    else:
-        print(f"📝 Using an existing version of the dataset")
+    run_script(GET_HOTPOTQA_SCRIPT)
+
+    run_script(CREATE_DATASET_SCRIPT)
 
     print(f"🧮 Validating Dataset")
     is_valid = run_script(VALIDATE_SCRIPT)
@@ -92,18 +109,30 @@ def main():
         else:
             print(f"⚠️ Cosine script not found at {COSINE_SCRIPT}")
 
+        logic_metric_id = prov.create_logic_metric(
+            experiment_id=experiment_id,
+            num_trials=N_TRIALS,
+            predicate_config={},   # será preenchido depois (script 01)
+            rules_config={},       # será preenchido depois (script 02)
+            facts_config={}        # será preenchido depois (script 03)
+        )
+
+        # exportamos para os scripts 01/02/03/04 usarem
+        os.environ["LOGIC_METRIC_ID"] = str(logic_metric_id)
+
+        print(f"🧠 logic_metric criado com ID={logic_metric_id}")
         # 3) Métrica de Lógica de primeira ordem
         # 3.1) Extrair o esquema de predicados 
         if DEFINE_PREDICATES_SCRIPT.exists():
             run_script(DEFINE_PREDICATES_SCRIPT)
         else:
-            print(f"⚠️ Cosine script not found at {DEFINE_PREDICATES_SCRIPT}")
+            print(f"⚠️ Define Predicate script not found at {DEFINE_PREDICATES_SCRIPT}")
             
         # 3.2) Extrair as regras lógicas
         if DEFINE_LOGICALRULES_SCRIPT.exists():
             run_script(DEFINE_LOGICALRULES_SCRIPT)
         else:
-            print(f"⚠️ Cosine script not found at {DEFINE_LOGICALRULES_SCRIPT}") 
+            print(f"⚠️ Define Logical Rules not found at {DEFINE_LOGICALRULES_SCRIPT}") 
 
         # Prepara ambiente para armazenar arquivos 
 
@@ -121,7 +150,9 @@ def main():
         # 3.3) Trials de lógica -> extrair os datos e realizar o cálculo da métria em cada trial
         for trial in range(1, N_TRIALS + 1):
             print(f"\n========== Logic metric trial {trial}/{N_TRIALS} ==========")
-
+            
+            os.environ["LOGIC_TRIAL_NUMBER"] = str(trial) # registra o trial no ambiente
+            
             # 3.1) Extrair fatos
             run_script(EXTRACT_FACTS_SCRIPT)
 

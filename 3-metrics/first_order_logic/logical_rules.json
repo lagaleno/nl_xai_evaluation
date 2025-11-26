@@ -1,24 +1,3 @@
 {
-  "rules": [
-    {
-      "name": "FounderOrganization",
-      "description": "If an organization was founded by someone, that person is the founder of that organization.",
-      "premises": [
-        {
-          "predicate": "FoundedBy",
-          "args": [
-            "organization",
-            "founder"
-          ]
-        }
-      ],
-      "conclusion": {
-        "predicate": "CreatedBy",
-        "args": [
-          "organization",
-          "founder"
-        ]
-      }
-    }
-  ]
+  "rules": []
 }

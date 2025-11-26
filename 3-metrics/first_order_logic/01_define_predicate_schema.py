@@ -6,10 +6,19 @@ import requests
 
 import pandas as pd
 from pathlib import Path
-# ================== CONFIGURAÇÕES ==================
+import sys
 
+# Caminhos
 THIS_FILE = Path(__file__).resolve()
 PROJECT_ROOT = THIS_FILE.parents[2]
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from provenance import ProvenanceDB  # noqa: E402
+
+# ================== CONFIGURAÇÕES ==================
+
 
 # Caminho para o CSV do HotpotQA preparado
 HOTPOT_CSV = PROJECT_ROOT / "0-utils" / "hotpotqa_train.csv"
@@ -23,6 +32,7 @@ LLAMA_MODEL_NAME = "llama3"
 # Arquivo de saída com o esquema de predicados
 SCHEMA_OUT = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schema.json"
 
+TEMPERATURE = 0.5
 # ===================================================
 
 
@@ -123,7 +133,7 @@ Now propose the predicate schema in the JSON format described above having ONLY 
     return prompt.strip()
 
 
-def call_llama(prompt: str, temperature: float = 0.5) -> str:
+def call_llama(prompt: str, temperature: float = TEMPERATURE) -> str:
     """
     Chama o modelo LLaMA via Ollama na linha de comando.
     Se você usar outra interface, adapte esta função.
@@ -224,6 +234,31 @@ def main():
     print("\nExtracted predicates:")
     for pred in schema.get("predicates", []):
         print(f"- {pred.get('name')}({', '.join(pred.get('args', []))})")
+    
+    # ====== Proveniência ======
+    logic_metric_id_env = os.getenv("LOGIC_METRIC_ID")
+    if logic_metric_id_env is None:
+        print("⚠️ LOGIC_METRIC_ID não encontrado no ambiente. Pulando registro de predicate_config.")
+        return
+
+    logic_metric_id = int(logic_metric_id_env)
+
+    predicate_config = {
+        "prompt": prompt,
+        "list_predicates": schema,
+        "model": LLAMA_MODEL_NAME,
+        "number_examples": N_EXAMPLES,
+        "temperature": TEMPERATURE
+    }
+
+    prov = ProvenanceDB()
+    prov.update_logic_metric_configs(
+        logic_metric_id=logic_metric_id,
+        predicate_config=predicate_config,
+    )
+    prov.close()
+
+    print(f"🧠 predicate_config registrado no banco para logic_metric_id={logic_metric_id}")
 
 
 if __name__ == "__main__":

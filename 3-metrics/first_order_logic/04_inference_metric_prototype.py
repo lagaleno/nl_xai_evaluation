@@ -4,11 +4,18 @@ from typing import Dict, List, Tuple, Set, Any
 
 import pandas as pd
 from pathlib import Path
-
-# ================== CONFIGURAÇÕES ==================
+import os
+import sys
 
 THIS_FILE = Path(__file__).resolve()
 PROJECT_ROOT = THIS_FILE.parents[2]
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from provenance import ProvenanceDB  # noqa: E402
+
+# ================== CONFIGURAÇÕES ==================
 
 SCHEMA_FILE = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schema.json"
 RULES_FILE = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "logical_rules.json"
@@ -249,6 +256,7 @@ def main():
     results_rows = []
 
     with open(FACTS_JSONL, "r", encoding="utf-8") as f_in:
+        inserted = 0
         for line_idx, line in enumerate(f_in, start=1):
             line = line.strip()
             if not line:
@@ -261,7 +269,6 @@ def main():
             chunk_facts_dicts = rec.get("chunk_facts", [])
             expl_facts_dicts = rec.get("explanation_facts", [])
 
-            # Se houve erro na extração (campo "error"), podemos pular ou marcar.
             if rec.get("error"):
                 print(f"⚠️ Skipping id={ex_id}, label={expl_label} due to extraction error.")
                 results_rows.append(
@@ -305,8 +312,50 @@ def main():
                 }
             )
 
-            # if line_idx % 20 == 0:
             print(f"   Processed {line_idx} explanations...")
+
+            # --- LÊ VARIÁVEIS DE AMBIENTE ---
+
+            experiment_id_env = os.getenv("EXPERIMENT_ID")
+            logic_metric_id_env = os.getenv("LOGIC_METRIC_ID")
+            logic_trial_env = os.getenv("LOGIC_TRIAL_NUMBER")
+
+            if not (experiment_id_env and logic_metric_id_env and logic_trial_env):
+                print("⚠️ EXPERIMENT_ID / LOGIC_METRIC_ID / LOGIC_TRIAL_NUMBER não encontrados. Pulando registro em logic_result.")
+                return
+
+            experiment_id = int(experiment_id_env)
+            logic_metric_id = int(logic_metric_id_env)
+            trial_number = int(logic_trial_env)
+
+            prov = ProvenanceDB()
+            metadata = {
+                "relevant_predicates": RELEVANT_PREDICATES
+            }
+
+            facts = {
+                "chunk_facts": list(chunk_facts),
+                "explanation_facts": list(expl_facts),
+            }
+            print("==================")
+
+            prov.insert_logic_result(
+                experiment_id=experiment_id,
+                logic_metric_id=logic_metric_id,
+                trial_number=trial_number,
+                sample_id=ex_id,
+                label=expl_label,
+                precision_result=metrics["precision"],
+                recall_result=metrics["recall"],
+                f1_result=metrics["f1"],
+                facts=facts,
+                metadata=metadata,
+            )
+            inserted += 1
+
+            prov.close()
+            print(f"🧠 logic_result: {inserted} linhas inseridas para trial={trial_number}")
+
 
     # Converte para DataFrame e salva CSV
     df = pd.DataFrame(results_rows)

@@ -1,11 +1,22 @@
 import json
 import os
 import re
+from pathlib import Path
+import sys
 
 import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 from sentence_transformers import SentenceTransformer, util
+
+# ========= IMPORT PROVENANCE =========
+
+THIS_FILE = Path(__file__).resolve()
+PROJECT_ROOT = THIS_FILE.parent.parent  # .../projeto
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from provenance import ProvenanceDB  # noqa: E402
 
 # ================== CONFIGURAÇÕES ==================
 
@@ -21,14 +32,18 @@ from sentence_transformers import SentenceTransformer, util
 #   ],
 #   ...
 # }
-JSONL_FILE = "./../1-creating_dataset/explainrag_hotpot_llama.jsonl"
 
-# Saídas
-CSV_OUT = "explanations_sentencewise_embeddings_metrics.csv"
-SUMMARY_OUT = "explanations_sentencewise_embeddings_summary_by_label.csv"
-PLOT_F1_BOX = "emb_f1_by_label_boxplot.png"
-PLOT_PREC_BOX = "emb_precision_by_label_boxplot.png"
-PLOT_REC_BOX = "emb_recall_by_label_boxplot.png"
+BASE_DIR = THIS_FILE.parent  # .../projeto/2-validating_dataset
+
+# Caminho do dataset JSONL com as explicações
+JSONL_FILE = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama.jsonl"
+
+# Saídas (ficam dentro de 2-validating_dataset/)
+CSV_OUT = BASE_DIR / "explanations_sentencewise_embeddings_metrics.csv"
+SUMMARY_OUT = BASE_DIR / "explanations_sentencewise_embeddings_summary_by_label.csv"
+PLOT_F1_BOX = BASE_DIR / "emb_f1_by_label_boxplot.png"
+PLOT_PREC_BOX = BASE_DIR / "emb_precision_by_label_boxplot.png"
+PLOT_REC_BOX = BASE_DIR / "emb_recall_by_label_boxplot.png"
 
 # Modelo de embeddings (bom, pequeno, rápido)
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
@@ -255,6 +270,35 @@ def main():
     print(f"📈 Gráfico salvo: {PLOT_REC_BOX}")
 
     print("\n✅ Avaliação concluída.")
+
+    # ============ PROVENIÊNCIA ============
+
+    experiment_id_env = os.getenv("EXPERIMENT_ID")
+    if experiment_id_env is None:
+        print("⚠️ EXPERIMENT_ID não encontrado no ambiente. Pulando registro de proveniência de validação.")
+    else:
+        experiment_id = int(experiment_id_env)
+        prov = ProvenanceDB()
+
+        # summary tem MultiIndex nas colunas; vamos transformar em dict serializável
+        summary_dict = summary.to_dict()
+
+        details = {
+            "embedding_model": EMBEDDING_MODEL,
+            "sim_threshold": SIM_THRESHOLD,
+            "summary_by_label": summary_dict,
+        }
+
+        validation_id = prov.insert_validation(
+            experiment_id=experiment_id,
+            embedding_model=str(EMBEDDING_MODEL),
+            threshold=SIM_THRESHOLD,
+            is_valid=bool(is_valid),
+            details=str(details),
+        )
+
+        print(f"🧪 Validation registrada no banco com id={validation_id}")
+        prov.close()
 
     return is_valid
 if __name__ == "__main__":

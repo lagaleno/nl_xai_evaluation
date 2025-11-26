@@ -1,260 +1,265 @@
-# XAI Dataset Generation & Evaluation
+# 📘 XAI Dataset Generation & Evaluation  
+### *(with Provenance Tracking via MariaDB + Docker)*
 
-This repository contains the full pipeline used to create, validate, and prepare a benchmark dataset of natural-language explanations for RAG (Retrieval-Augmented Generation) systems.  
-The project includes:
+This repository contains the full pipeline for creating, validating, and benchmarking a dataset of natural-language explanations for RAG (Retrieval-Augmented Generation) systems.  
+The workflow includes:
 
-- automatic extraction of HotpotQA data  
-- generation of a dataset containing examples of three explanation types (*correct*, *incomplete*, *incorrect*) using an LLM  
-- preliminary validation using sentence-wise embedding similarity  
-- a experimentation pipeline for comparing multiple automatic explainability metrics.  The experiments include:
-  - cosine similarity between each explanation and its supporting chunk (embedding-based semantic overlap)
-  - Jaccard similarity (lexical overlap baseline)
-  - logical-inference–based evaluation using a predicate schema, LLM-generated logical rules, fact extraction, and an inference engine
-  - multi-trial execution for the logic-based metric, allowing variance estimation
-  - automated result aggregation, producing per-metric summaries (mean, std, count) grouped by explanation label
-  - generation of plots (bar plots, boxplots, grouped comparisons) for analysis and inclusion in the research paper
-
----
-## TL;DR
-- Make sure you have all technical Prerequisites installed, described in `requirements.txt`
-- Make sure you have the file `hotpotqa_tra.csv` on the folder `0-utils`
-- Create the explanation dataset by the script `1-creating_dataset/create_dataset.py` or has one dowloaded and on folder `1-creating_dataset`
-- Evaluate the data set by the script `2-validating_dataset/validate_dataset.py`
-- Run the experiment throygh `4-experiment/main.py` running `python main.py`
-- Run the analysis script to get the graphs and aggregated csv on `5-analysis/analyze.py`
-  
-## 📦 1. Prerequisites
-
-- **Python 3.9+**  
-- macOS or Linux (recommended)  
-- `pip` or `pip3` installed  
-- (Optional) A local LLaMA runtime (Ollama / llama.cpp)
+- extracting a sample of HotpotQA  
+- generating 3 explanation types per question (*correct*, *incomplete*, *incorrect*) using an LLM  
+- validating explanations using embedding similarity  
+- running a complete multi-metric experiment:
+  - cosine similarity  
+  - Jaccard similarity  
+  - logical inference (predicate schema + rules + fact extraction + inference engine)  
+- aggregating and visualizing results  
+- **tracking full provenance** (experiment metadata, creation events, metrics, intermediate steps) using a **MariaDB database running inside Docker**
 
 ---
 
-## 🚀 2. Installation
+# 🧭 TL;DR — How to run everything
 
-All dependencies are listed in `requirements.txt`.
+1. **Install Python dependencies**
+   ```bash
+   ./install.sh
+   ```
 
-Simply run:
+2. **Start the provenance database**
+   ```bash
+   docker compose up -d
+   ```
+
+3. **Run the full experiment** (recreates datasets if missing)  
+   ```bash
+   python 4-experiment/main.py
+   ```
+
+4. **Analyze results (graphs + tables)**  
+   ```bash
+   python 5-analysis/analyze.py
+   ```
+
+5. **(Optional) Browse provenance records**  
+   Open: http://localhost:8080  
+   - System: MySQL  
+   - Server: mariadb  
+   - User: larissa  
+   - Password: 1234  
+   - Database: provdb  
+
+---
+
+# 📦 1. Prerequisites
+
+You need:
+
+- **Python 3.9+**
+- **Docker & Docker Compose**
+- Linux or macOS recommended
+- `pip` installed
+- Internet access (for downloading HotpotQA and LLM responses)
+
+---
+
+# 🐳 2. Provenance Database Setup (Docker)
+
+This repository includes a ready-to-use `docker-compose.yml` that starts:
+
+- **MariaDB 11** (stores provenance)
+- **Adminer** (web UI for inspecting the DB)
+
+To start the database:
 
 ```bash
-./install.sh
+docker compose up -d
 ```
 
-The script automatically detects whether your system uses  
-`pip3` (macOS) or `pip` (Linux/WSL) and installs all dependencies accordingly.
-
-If you prefer manual installation:
+Check that it is running:
 
 ```bash
-pip3 install -r requirements.txt
+docker ps
 ```
+
+You should see `prov_db` and `prov_adminer` running.
+
+### Database connection info
+
+| Field       | Value      |
+|-------------|------------|
+| host        | localhost  |
+| port        | 3307       |
+| user        | larissa    |
+| password    | 1234       |
+| database    | provdb     |
+
+Adminer URL: http://localhost:8080
 
 ---
 
-## 📁 3. Project Structure
+# 📁 3. Project Structure
 
 ```
 project_root/
 │
+├── provenance.py                     # Provenance logging API for all scripts
+│
+├── db/
+│   ├── init/schema.sql               # Tables created automatically by Docker
+│   └── data/                         # Docker-managed database files
+│
 ├── 0-utils/
-│   ├── get_hotpotqa.py        # Downloads HotpotQA and converts to CSV
-│   └── hotpotqa_train.csv/    # CSV containing hotpotqa dataset
+│   ├── get_hotpotqa.py               # Downloads HotpotQA and updates provenance
+│   └── hotpotqa_train.csv
 │
 ├── 1-creating_dataset/
-│   └── create_dataset.py     # Generates 3 explanation types per Q/A
+│   └── create_dataset.py             # Generates 3 explanations per Q/A
 │
 ├── 2-validating_dataset/
-│   ├── validate_dataset.py       # Sentence-wise cosine similarity validation
-│   ├── figures/                  # Evaluation plots (precision, recall, F1)
-│   └── metrics/                  # Evaluation metrics (precision, recall, F1)
+│   ├── validate_dataset.py           # Embedding-based validation
+│   └── figures/
 │
 ├── 3-metrics/
-│   ├── utils.py             # File with functions to be used in scripts of the experiment
-│   ├── cosine_similarity/   # Compute the cosine similarity
-│   ├── jaccard_similarity/  # Compute Jaccard similarity
-│   └── first_order_logic/   # Evaluate the explenation through first order logic
+│   ├── cosine_similarity/
+│   ├── jaccard_similarity/
+│   └── first_order_logic/
 │
 ├── 4-experiment/
-│   ├── main.py                          # Script to orchestrate the computation of metrics
-│   ├── logical_summary_results_trial/   # Store the results from each trial
-│   ├── *.csv/                           # Store the results from each metrics in csv files
+│   └── main.py                       # Orchestrates the full experiment
 │
 ├── 5-analysis/
-│   ├── analyze.py              # Script to perform tha analysis of the metrics result
-│   ├── figure/                 # Store graph figures generated
-│   ├── *.csv/                  # Store the summary results for each label in each metric
+│   └── analyze.py                    # Final plots + aggregated results
 │
+├── docker-compose.yml
 ├── requirements.txt
-├── install.sh
-└── README.md
+└── install.sh
 ```
 
 ---
 
-## 📝 4. Step-by-Step Usage
+# 🧪 4. How to Run the Full Pipeline
 
-### **Step 0 — Prepare HotpotQA**
-
-Download and convert the dataset:
+## Step 0 — Start the Provenance Database (required)
 
 ```bash
-python 0-utils/get_hotpotqa.py
-```
-
-Output:
-
-```
-0-utils/hotpotqa_train.csv
+docker compose up -d
 ```
 
 ---
 
-### **Step 1 — Generate the Explanation Dataset**
+## Step 1 — Run the Main Experiment
 
-```bash
-python 1-creating_dataset/create_dataset.py
-```
+This script:
 
-Output:
+- creates a new experiment entry in the provenance DB  
+- downloads HotpotQA if needed  
+- generates the explanation dataset  
+- validates the dataset  
+- runs:
+  - Jaccard  
+  - Cosine  
+  - Logical inference (predicates, rules, fact extraction, multi-trial)  
+- stores all metric outputs  
+- updates the database at every stage  
 
-```
-1-creating_dataset/explainrag_hotpot_llama.jsonl
-```
-
----
-
-### **Step 2 — Validate the Dataset (Sanity Check)**
-
-```bash
-python 2-validating_dataset/evaluate_dataset.py
-```
-
-Outputs:
-
-- explanations_sentencewise_embeddings_metrics.csv  
-- explanations_sentecewise_embeddings_summary_by_label.csv  
-- emb_f1_by_label_boxplot.png  
-- emb_precision_by_label_boxplot.png  
-- emb_recall_by_label_boxplot.png  
-
----
-
-### **Step 3 — Metrics**
-This project includes a set of metrics to analyze how different automatic metrics behave when evaluating natural-language explanations in a RAG setting. All experiments assume that the explanation dataset has already been generated, the file: `1-creating_dataset/explainrag_hotpot_llama.jsonl`.
-
-#### Cosine Similarity
-This experiment measures the global semantic similarity between each explanation and its supporting chunk using sentence embeddings and cosine similarity. To run:
-
-```bash
-python 3-metrics/cosine_similarity/run_cosine_similarity.py
-```
-What it does:
-
-- Loads explainrag_dataset.jsonl
-- Builds aligned pairs: (chunk, explanation, label)
-- Encodes chunks and explanations with all-MiniLM-L6-v2 (SentenceTransformers)
-- Computes cosine similarity between each chunk–explanation pair
-  
-Output:
-```
-3-metrics/cosine_similarity/cosine_similarity_results.csv
-3-metrics/cosine_similarity/cosine_similarity_summary_by_label.csv
-```
-#### Jaccard Similarity
-This experiment computes a token-level Jaccard similarity between each explanation and its chunk, serving as a simple lexical baseline for comparison with embedding-based methods. To run:
-
-```bash
-python 3-metrics/jaccard_similarity/run_jaccard_similarity.py
-```
-What it does:
-- Loads explainrag_dataset.jsonl
-- Reuses the same (chunk, explanation, label) pairs
-- Tokenizes both texts into lowercase alphanumeric “words”
-- Computes Jaccard similarity
-
-Output:
-```
-3-metrics/jaccard_similarity/jaccard_similarity_results.csv
-3-metrics/jaccard_similarity/jaccard_similarity_summary_by_label.csv
-```
-
-#### Logical Inference Metric (First-Order Logic)
-
-This experiment evaluates each explanation using a symbolic reasoning engine based on first-order logic (FOL).  
-The goal is to measure how much of an explanation can be logically supported or inferred from the chunk through a set of predefined predicates and inference rules.
-
-To run:
-
-```bash
-python 3-metrics/first_order_logic/04_inference_metric_prototype.py
-```
-What it does:
-- Loads the predicate schema and logical rules (predicate_schema.json, logical_rules.json)
-- Reads the extracted factual representations (facts_extracted_llm.jsonl) produced by the LLM
-- For each explanation:
-    - Converts chunk and explanation facts into structured predicates
-    - Performs forward-chaining (logical closure) over chunk facts
-    - Computes:
-        - TP: facts asserted in the explanation that are entailed by the chunk
-        - FP: facts asserted in the explanation that are not supported by the chunk
-        - FN: facts inferable from the chunk but missing from the explanation
-    - Computes precision, recall, and F1 in this logical space
-- Aggregates metrics by explanation label (correct, incomplete, incorrect)
-
-Output:
-```bash
-3-metrics/first_order_logic/logical_metrics_results.csv
-```
-Example Columns include: `id, explanation_label, tp, fp, fn, precision, recall, f1`
-
-#### Shared Utilities
-Metrics computation reuse common helper functions defined in: `3-metrics/utils.py`
-
-This module:
-- parses the JSONL dataset,
-- builds structured examples with:
-    - dataset_id
-    - chunk
-    - explanations (correct, incomplete, incorrect)
-- flattens them into chunk–explanation pairs for metric computation.
-
-### **Step 4 — Experiment**
-This part is to mainly orchestrate the running of the experiment, putting on order the different scripts descibed above to get the metrics results on csvs.  
+Run:
 
 ```bash
 python 4-experiment/main.py
 ```
-The outputs repeents the outputs of the different metrics
 
-### **Step 5 — Analysis**
-Through the results obtained in the experiments this script will shocase graphs and table to assist in the analysis of the result
+A new row will appear in the `experiment` table.
+
+---
+
+## Step 2 — Analyze Results
+
+After the experiment is complete:
 
 ```bash
 python 5-analysis/analyze.py
 ```
 
+Outputs include:
+
+- summary CSVs  
+- graphs (boxplots, bar plots, grouped comparisons)
+
 ---
 
-## ❗ Troubleshooting
+# 🗄 5. Provenance Logging (What gets stored?)
 
-### Pip issues  
-```bash
-pip3 install -r requirements.txt
+### Tables include:
+
+- `experiment`  
+- `creation`  
+- `xai_dataset`  
+- `validation`  
+- `cosine_results`  
+- `jaccard_results`  
+- `logic_metric`  
+- `logic_result`
+
+Each script updates the DB through `provenance.py`.
+
+This ensures that every experiment is:
+
+- reproducible  
+- auditable  
+- traceable  
+
+with full metadata about each stage.
+
+---
+
+# ❗ Troubleshooting
+
+### MariaDB port already in use (3306)
+
+If you see:
+
+```
+Error: Ports are not available
 ```
 
-### Matplotlib errors on macOS
+Edit `docker-compose.yml`:
+
+```yaml
+ports:
+  - "3307:3306"
+```
+
+---
+
+### Import errors (`ModuleNotFoundError: provenance`)
+
+Always run scripts from the project root:
+
+```bash
+python 4-experiment/main.py
+```
+
+---
+
+### Database connection issues
+
+Check containers:
+
+```bash
+docker ps
+```
+
+Check Adminer UI:
+http://localhost:8080
+
+---
+
+### Matplotlib issues on macOS
 
 ```bash
 brew install freetype pkg-config libpng
 ```
 
-### LLaMA inference errors  
-Ensure your local model server is running.
-
 ---
 
-## 💬 Contact
+# 💬 Contact
 
-For questions or contributions, please open an issue in the repository.
+For questions or suggestions, feel free to open an issue.

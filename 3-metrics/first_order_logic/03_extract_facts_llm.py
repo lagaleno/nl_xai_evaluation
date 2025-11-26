@@ -9,11 +9,17 @@ import requests
 
 import pandas as pd
 from pathlib import Path
-
-# ================== CONFIGURAÇÕES ==================
+import sys
 
 THIS_FILE = Path(__file__).resolve()
 PROJECT_ROOT = THIS_FILE.parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from provenance import ProvenanceDB  # noqa: E402
+
+# ================== CONFIGURAÇÕES ==================
+
 
 # Arquivo de entrada com o schema de predicados (o que você já gerou)
 SCHEMA_FILE = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schema.json"
@@ -38,6 +44,10 @@ LLAMA_MODEL_NAME = "llama3"
 
 # Limite opcional de linhas (para teste). Se None, processa tudo.
 MAX_ROWS = None  # ex.: 10 para testar, depois None
+
+TEMPERATURE = 0.5
+
+PROV_METRIC = {}
 
 # ===================================================
 
@@ -98,7 +108,7 @@ Here is the {source_type} text:
     return prompt.strip()
 
 
-def call_llama(prompt: str,  temperature: float = 0.5) -> str:
+def call_llama(prompt: str,  temperature: float = TEMPERATURE) -> str:
     """
     Chama o modelo LLaMA via Ollama.
     """
@@ -196,6 +206,7 @@ def process_row(schema: Dict[str, Any], row: pd.Series) -> List[Dict[str, Any]]:
         print(f"⚠️ Could not parse chunk dictionary for id={ex_id}: {e}")
         chunk_text = []
     prompt_chunk = build_extraction_prompt(schema, chunk_text, source_type="chunk")
+    PROV_METRIC["prompt"] = prompt_chunk # armazenando para proveniência
     raw_chunk = call_llama(prompt_chunk)
     chunk_facts = parse_facts_output(raw_chunk)
 
@@ -273,6 +284,31 @@ def main():
                 f_out.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
     print(f"\n✅ Finished. Facts saved to: {OUTPUT_JSONL}")
+
+    # ====== PROVENIÊNCIA ======
+
+    logic_metric_id_env = os.getenv("LOGIC_METRIC_ID")
+    if logic_metric_id_env is None:
+        print("⚠️ LOGIC_METRIC_ID não encontrado no ambiente. Pulando registro de facts_config.")
+        return
+
+    logic_metric_id = int(logic_metric_id_env)
+
+    facts_config = {
+        "prompt": PROV_METRIC["prompt"],            
+        "model": LLAMA_MODEL_NAME,         
+        "temperature": TEMPERATURE,    
+        "max_rows": MAX_ROWS,
+    }
+
+    prov = ProvenanceDB()
+    prov.update_logic_metric_configs(
+        logic_metric_id=logic_metric_id,
+        facts_config=facts_config,
+    )
+    prov.close()
+
+    print(f"🧠 facts_config registrado no banco para logic_metric_id={logic_metric_id}")
 
 
 if __name__ == "__main__":

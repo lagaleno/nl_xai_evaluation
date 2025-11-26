@@ -4,11 +4,18 @@ import subprocess
 import requests
 
 from pathlib import Path
-
-# ================== CONFIGURAÇÕES ==================
+import sys
 
 THIS_FILE = Path(__file__).resolve()
 PROJECT_ROOT = THIS_FILE.parents[2]
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from provenance import ProvenanceDB
+
+# ================== CONFIGURAÇÕES ==================
+
 
 # Arquivo de entrada com o schema de predicados (o que você já gerou)
 SCHEMA_FILE = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schema.json"
@@ -23,6 +30,7 @@ LLAMA_MODEL_NAME = "llama3"
 TARGET_MIN_RULES = 3
 TARGET_MAX_RULES = 12
 
+TEMPERATURE = 0.5
 # ===================================================
 
 
@@ -178,7 +186,7 @@ def validate_and_filter_rules(schema: dict, rules_obj: dict) -> dict:
 
 
 
-def call_llama(prompt: str, temperature: float = 0.5) -> str:
+def call_llama(prompt: str, temperature: float = TEMPERATURE) -> str:
     """
     Chama o modelo LLaMA via Ollama na linha de comando.
     Ajuste LLAMA_MODEL_NAME conforme seu setup.
@@ -280,6 +288,32 @@ def main():
     print("\nExtracted rules:")
     for rule in rules.get("rules", []):
         print(f"- {rule.get('name')}: {rule.get('description')}")
+    
+    # === PROVENIÊNCIA ===
+    logic_metric_id_env = os.getenv("LOGIC_METRIC_ID")
+    if logic_metric_id_env is None:
+        print("⚠️ LOGIC_METRIC_ID não encontrado no ambiente. Pulando registro de rules_config.")
+        return
+
+    logic_metric_id = int(logic_metric_id_env)
+
+    rules_config = {
+        "prompt": prompt,
+        "list_rules": rules,
+        "model": LLAMA_MODEL_NAME,
+        "target_min_rules": TARGET_MIN_RULES,
+        "target_max_rules": TARGET_MAX_RULES, 
+        "temperature": TEMPERATURE
+    }
+
+    prov = ProvenanceDB()
+    prov.update_logic_metric_configs(
+        logic_metric_id=logic_metric_id,
+        rules_config=rules_config
+    )
+    prov.close()
+
+    print(f"🧠 rules_config registrado no banco para logic_metric_id={logic_metric_id}")
 
 
 if __name__ == "__main__":

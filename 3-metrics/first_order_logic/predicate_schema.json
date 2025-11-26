@@ -1,44 +1,53 @@
 {
   "predicates": [
     {
-      "name": "LocatedAt",
+      "name": "located_in",
       "args": [
         "entity",
         "location"
       ],
-      "description": "An entity is located at a specific location."
+      "description": "An entity is located at a specific location"
     },
     {
-      "name": "TypeOf",
+      "name": "part_of",
       "args": [
         "entity",
-        "type"
+        "whole"
       ],
-      "description": "An entity has a certain type or category."
+      "description": "One entity is part of another entity or whole"
     },
     {
-      "name": "CreatedBy",
+      "name": "type_of",
       "args": [
         "entity",
-        "creator"
+        "category"
       ],
-      "description": "An entity was created by a specific person or organization."
+      "description": "An entity belongs to a certain category or type"
     },
     {
-      "name": "StarredIn",
+      "name": "has_relationship",
+      "args": [
+        "entity1",
+        "entity2",
+        "relation"
+      ],
+      "description": "Two entities have a specific relationship with each other"
+    },
+    {
+      "name": "married_to",
+      "args": [
+        "actor",
+        "spouse"
+      ],
+      "description": "An actor is married to another person"
+    },
+    {
+      "name": "starred_in",
       "args": [
         "actor",
         "film"
       ],
-      "description": "An actor starred in a film or movie."
-    },
-    {
-      "name": "FoundedBy",
-      "args": [
-        "organization",
-        "founder"
-      ],
-      "description": "An organization was founded by a specific person or group of people."
+      "description": "An actor starred in a film"
     }
   ]
 }

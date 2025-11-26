@@ -1,0 +1,87 @@
+##############################
+# PYTHON CACHE & TEMP FILES #
+##############################
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.pickle
+*.log
+*.tmp
+
+# IPython / Jupyter
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+##############################
+# DATABASE & DOCKER VOLUMES  #
+##############################
+# MariaDB / MySQL local volumes
+mariadb-data/
+mysql-data/
+db-data/
+data/
+
+# SQL dumps or local DB files
+*.db
+*.sql
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.dump
+*.pid
+
+# ##############################
+# # DATASETS & GENERATED DATA  #
+# ##############################
+# # HotpotQA
+# 0-utils/hotpotqa_train.csv
+
+# # Explanation dataset
+# 1-creating_dataset/*.jsonl
+# 1-creating_dataset/*.csv
+
+# # Validation outputs
+# 2-validating_dataset/figures/
+# 2-validating_dataset/metrics/
+# 2-validating_dataset/*.csv
+# 2-validating_dataset/*.png
+
+# # Metrics outputs
+# 3-metrics/**/*.csv
+# 3-metrics/**/*.json
+# 3-metrics/**/facts_extracted*.jsonl
+# 3-metrics/**/predicate_schema.json
+# 3-metrics/**/logical_rules.json
+
+# # Experiment outputs
+# 4-experiment/*.csv
+# 4-experiment/logical_summary_results_trial/
+# 4-experiment/logical_result_trials_out/
+# 4-experiment/logical_summary_results_trials_out/
+# 4-experiment/facts_extracted_trial/
+
+# # Analysis outputs
+# 5-analysis/*.csv
+# 5-analysis/figure/
+# 5-analysis/report/
+# 5-analysis/*.png
+
+##############################
+# SYSTEM / OS FILES          #
+##############################
+.DS_Store
+Thumbs.db
+
+##############################
+# SENSITIVE CONFIG FILES     #
+##############################
+.env
+*.env
+.env.*

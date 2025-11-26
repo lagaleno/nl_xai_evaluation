@@ -11,6 +11,13 @@ EXPERIMENTS_ROOT = THIS_FILE.parents[1]  # 3-experiments/
 sys.path.append(str(EXPERIMENTS_ROOT))
 from utils import build_examples, flatten_examples
 
+# ==== IMPORT PROVENANCE ====
+PROJECT_ROOT = THIS_FILE.parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from provenance import ProvenanceDB  # noqa: E402
+
 # ================== CONFIGURAÇÕES ==================
 
 PROJECT_ROOT = THIS_FILE.parents[2]
@@ -64,7 +71,7 @@ def main():
     print(f"📥 Loading dataset from: {JSONL_FILE}")
     examples = build_examples(JSONL_FILE)
     print(f"Total examples loaded: {len(examples)}")
-
+    
     if not examples:
         print("No examples found. Check the JSONL format.")
         return
@@ -83,7 +90,7 @@ def main():
     for item in tqdm(rows):
         sim = jaccard_similarity(item["chunk_text"], item["explanation_text"])
         jaccards.append(sim)
-
+    
     # Build DataFrame
     df = pd.DataFrame(rows)
     df["jaccard_similarity"] = jaccards
@@ -98,6 +105,38 @@ def main():
     print(f"✅ Summary by label saved to: {SUMMARY_OUT}")
     print("\n📊 Jaccard similarity summary by label:")
     print(summary)
+
+    # ========= PROVENIÊNCIA: salvar cada linha =========
+
+    experiment_id_env = os.getenv("EXPERIMENT_ID")
+    if experiment_id_env is None:
+        print("⚠️ EXPERIMENT_ID not found in environment. Skipping Jaccard provenance.")
+        return
+
+    experiment_id = int(experiment_id_env)
+    prov = ProvenanceDB()
+
+    inserted = 0
+    for _, row in df.iterrows():
+        sample_id = row.get("dataset_id")
+        label = row.get("label", "")
+        jacc = row.get("jaccard_similarity", 0.0)
+        metadata = {
+            "chunk_len": len(str(row.get("chunk_text", ""))),
+            "expl_len": len(str(row.get("explanation_text", ""))),
+        }
+
+        prov.insert_jaccard_result(
+            experiment_id=experiment_id,
+            sample_id=str(sample_id),
+            label=str(label),
+            jaccard=float(jacc),
+            metadata=metadata,
+        )
+        inserted += 1
+
+    print(f"🧮 Jaccard results registrados no banco: {inserted} linhas.")
+    prov.close()
 
 
 if __name__ == "__main__":

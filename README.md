@@ -30,12 +30,14 @@ The workflow includes:
 
 3. **Run the full experiment** (recreates datasets if missing)  
    ```bash
-   python 4-experiment/main.py
+   cd 4-experiment
+   python main.py
    ```
 
 4. **Analyze results (graphs + tables)**  
    ```bash
-   python 5-analysis/analyze.py
+   cd 5-analysis
+   python analyze.py
    ```
 
 5. **(Optional) Browse provenance records**  

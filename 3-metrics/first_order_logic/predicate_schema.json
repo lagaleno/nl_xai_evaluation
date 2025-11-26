@@ -1,36 +1,28 @@
 {
   "predicates": [
     {
-      "name": "located_in",
+      "name": "located_at",
       "args": [
         "entity",
         "location"
       ],
-      "description": "The entity is located at the location."
+      "description": "Entity is located at a specific location"
     },
     {
-      "name": "type_of",
+      "name": "author_of",
       "args": [
         "entity",
-        "type"
+        "work"
       ],
-      "description": "The entity has a type."
+      "description": "Entity is the author of a work"
     },
     {
-      "name": "created_by",
+      "name": "part_of",
       "args": [
         "entity",
-        "creator"
+        "whole"
       ],
-      "description": "The entity was created by the creator."
-    },
-    {
-      "name": "founded_by",
-      "args": [
-        "organization",
-        "founder"
-      ],
-      "description": "The organization was founded by the founder."
+      "description": "Entity is part of a larger whole"
     },
     {
       "name": "married_to",
@@ -38,23 +30,15 @@
         "person1",
         "person2"
       ],
-      "description": "Person1 is married to Person2."
+      "description": "Person1 is married to Person2"
     },
     {
-      "name": "starring",
+      "name": "played_role_in",
       "args": [
-        "actor",
-        "movie"
+        "entity",
+        "work"
       ],
-      "description": "The actor starred in the movie."
-    },
-    {
-      "name": "based_on",
-      "args": [
-        "work",
-        "source"
-      ],
-      "description": "The work was based on the source."
+      "description": "Entity played a role in a work (e.g. movie, TV show)"
     }
   ]
 }

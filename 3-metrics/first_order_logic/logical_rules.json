@@ -1,36 +1,56 @@
 {
   "rules": [
     {
-      "name": "Rule 1",
-      "description": "An entity is located in the same location as another if they were created by the same creator.",
+      "name": "Authorship Inheritance",
+      "description": "An entity that is part of a whole is also the author of the work the whole is part of.",
       "premises": [
         {
-          "predicate": "created_by",
+          "predicate": "part_of",
           "args": [
-            "entity1",
-            "creator"
+            "entity",
+            "whole"
           ]
         },
         {
-          "predicate": "created_by",
+          "predicate": "played_role_in",
           "args": [
-            "entity2",
-            "creator"
-          ]
-        },
-        {
-          "predicate": "located_in",
-          "args": [
-            "entity1",
-            "location"
+            "whole",
+            "work"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "located_in",
+        "predicate": "author_of",
         "args": [
-          "entity2",
-          "location"
+          "entity",
+          "work"
+        ]
+      }
+    },
+    {
+      "name": "Marriage Transitivity",
+      "description": "If person1 is married to person2 and person2 is married to person3, then person1 is married to person3.",
+      "premises": [
+        {
+          "predicate": "married_to",
+          "args": [
+            "person1",
+            "person2"
+          ]
+        },
+        {
+          "predicate": "married_to",
+          "args": [
+            "person2",
+            "person3"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "married_to",
+        "args": [
+          "person1",
+          "person3"
         ]
       }
     }

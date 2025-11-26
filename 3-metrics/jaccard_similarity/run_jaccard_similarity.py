@@ -7,8 +7,8 @@ from tqdm.auto import tqdm
 import sys
 from pathlib import Path
 THIS_FILE = Path(__file__).resolve()
-EXPERIMENTS_ROOT = THIS_FILE.parents[1]  # 3-experiments/
-sys.path.append(str(EXPERIMENTS_ROOT))
+METRICS_ROOT = THIS_FILE.parents[1]  # 3-metrics/
+sys.path.append(str(METRICS_ROOT))
 from utils import build_examples, flatten_examples
 
 # ==== IMPORT PROVENANCE ====

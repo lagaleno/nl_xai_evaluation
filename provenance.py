@@ -54,6 +54,53 @@ class ProvenanceDB:
 
 
     # ============================================================
+    # EXPERIMENT OVERVIEW (summaries de métricas)
+    # ============================================================
+
+    def update_experiment_summaries(self,
+                                    experiment_id: int,
+                                    jaccard_summary: Optional[Dict[str, Any]] = None,
+                                    cosine_summary: Optional[Dict[str, Any]] = None,
+                                    logic_summary: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Atualiza os summaries de métricas na tabela experiment.
+        Cada summary deve ser um dict já serializável em JSON, por exemplo:
+        {
+          "correct":   {"mean": 0.8, "std": 0.05, "count": 10},
+          "incomplete":{"mean": 0.6, ...},
+          "incorrect": {...}
+        }
+        """
+        sets = []
+        params = []
+
+        if jaccard_summary is not None:
+            sets.append("jaccard_summary = %s")
+            params.append(json.dumps(jaccard_summary))
+
+        if cosine_summary is not None:
+            sets.append("cosine_summary = %s")
+            params.append(json.dumps(cosine_summary))
+
+        if logic_summary is not None:
+            sets.append("logic_summary = %s")
+            params.append(json.dumps(logic_summary))
+
+        if not sets:
+            return
+
+        query = f"""
+            UPDATE experiment
+            SET {", ".join(sets)}
+            WHERE id = %s
+        """
+        params.append(experiment_id)
+
+        with self.conn.cursor() as cur:
+            cur.execute(query, tuple(params))
+
+
+    # ============================================================
     # CREATION (geração do dataset de explicabilidade)
     # ============================================================
 

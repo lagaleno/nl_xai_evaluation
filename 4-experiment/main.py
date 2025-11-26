@@ -3,7 +3,9 @@ import importlib.util
 import os
 import shutil
 import sys
-
+import pandas as pd 
+# pega todos os arquivos de summary por trial
+from glob import glob
 
 
 # THIS_FILE = .../projeto/4-experiment/main_experiment.py
@@ -49,7 +51,7 @@ TRIAL_LOGIC_RESULT_NAME = "logical_result_trials_out"
 TRIAL_LOGIC_RESULT = PROJECT_ROOT / "4-experiment" / TRIAL_LOGIC_RESULT_NAME
 TRIAL_LOGIC_SUMMARY_RESULT = PROJECT_ROOT / "4-experiment" / "logical_summary_results_trials_out"
 
-N_TRIALS = 1  # número de trials da métrica lógica
+N_TRIALS = 2  # número de trials da métrica lógica
 
 def run_script(path: Path, func_name: str | None = "main"):
     """
@@ -189,6 +191,129 @@ def main():
                 print(f"Saved logic results for trial {trial}: {results_summary_trial}")
             else:
                 print(f"⚠️ Logic results file not found at {TRIAL_LOGIC_SUMMARY_RESULT}")
+
+        # Pega o resumo dos resultados das métricas para o banco de Proveniência
+
+        # ---------- JACCARD ----------
+        jaccard_summary_path = PROJECT_ROOT / "4-experiment" / "jaccard_similarity_summary_by_label.csv"
+        if jaccard_summary_path.exists():
+            jacc_df = pd.read_csv(jaccard_summary_path, index_col="label")
+            jaccard_summary = {}
+            for label in jacc_df.index:
+                row = jacc_df.loc[label]
+                jaccard_summary[label] = {
+                    "mean": float(row["mean"]),
+                    "std": float(0.0 if pd.isna(row["std"]) else row["std"]),
+                    "count": int(row["count"]),
+                }
+        else:
+            jaccard_summary = None
+            print(f"⚠️ Jaccard summary CSV não encontrado em {jaccard_summary_path}")
+
+        # ---------- COSINE ----------
+        cosine_summary_path = PROJECT_ROOT / "4-experiment" / "cosine_similarity_summary_by_label.csv"
+        if cosine_summary_path.exists():
+            cos_df = pd.read_csv(cosine_summary_path, index_col="label")
+            cosine_summary = {}
+            for label in cos_df.index:
+                row = cos_df.loc[label]
+                cosine_summary[label] = {
+                    "mean": float(row["mean"]),
+                    "std": float(0.0 if pd.isna(row["std"]) else row["std"]),
+                    "count": int(row["count"]),
+                }
+        else:
+            cosine_summary = None
+            print(f"⚠️ Cosine summary CSV não encontrado em {cosine_summary_path}")
+
+        # ---------- LOGIC (USANDO OS SUMMARIES POR TRIAL) ----------
+        logic_summary = {"per_trial": {}, "overall": None}
+
+        
+        summary_files = sorted(
+            TRIAL_LOGIC_SUMMARY_RESULT.glob("logical_metrics_summary_results_trial*.csv")
+        )
+
+        if summary_files:
+            for path in summary_files:
+                # tenta extrair o número do trial do nome do arquivo
+                # ex: logical_metrics_summary_results_trial1.csv -> 1
+                name = path.stem  # logical_metrics_summary_results_trial1
+                # pega tudo que for dígito no final do nome
+                trial_str = "".join(ch for ch in name if ch.isdigit())
+                trial_num = trial_str or "1"
+
+                df_sum = pd.read_csv(path)
+
+                trial_dict = {}
+                for _, row in df_sum.iterrows():
+                    label = str(row["explanation_label"])
+                    trial_dict[label] = {
+                        "mean": float(row["mean"]),
+                        "std": float(0.0 if pd.isna(row["std"]) else row["std"]),
+                        "count": int(row["count"]),
+                    }
+
+                logic_summary["per_trial"][str(trial_num)] = trial_dict
+        else:
+            logic_summary = None
+            print(f"⚠️ Nenhum summary de lógica por trial encontrado em {TRIAL_LOGIC_SUMMARY_RESULT}")
+        # 2) overall: agrega TODOS os trials usando os resultados completos
+        all_logic_files = sorted(
+            TRIAL_LOGIC_RESULT.glob("logical_metrics_results_trial*.csv")
+        )
+
+        if all_logic_files:
+            dfs = [pd.read_csv(p) for p in all_logic_files]
+            all_logic_df = pd.concat(dfs, ignore_index=True)
+
+            label_col = "explanation_label"
+
+            if label_col not in all_logic_df.columns:
+                print(f"⚠️ Coluna {label_col} não encontrada em logical_results. Colunas disponíveis: {list(all_logic_df.columns)}")
+            else:
+                group = all_logic_df.groupby(label_col)[["precision", "recall", "f1"]].agg(["mean", "std", "count"])
+
+                LOGIC_SUMMARY_ALL = PROJECT_ROOT / "4-experiment" / "logical_metrics_summary_all_trials.csv"
+                group.to_csv(LOGIC_SUMMARY_ALL)
+                print(f"✅ Logic summary (todos os trials) salvo em: {LOGIC_SUMMARY_ALL}")
+
+                overall = {}
+                for label in group.index:
+                    stats = group.loc[label]
+                    overall[label] = {
+                        "precision": {
+                            "mean": float(stats[("precision", "mean")]),
+                            "std": float(0.0 if pd.isna(stats[("precision", "std")]) else stats[("precision", "std")]),
+                            "count": int(stats[("precision", "count")]),
+                        },
+                        "recall": {
+                            "mean": float(stats[("recall", "mean")]),
+                            "std": float(0.0 if pd.isna(stats[("recall", "std")]) else stats[("recall", "std")]),
+                            "count": int(stats[("recall", "count")]),
+                        },
+                        "f1": {
+                            "mean": float(stats[("f1", "mean")]),
+                            "std": float(0.0 if pd.isna(stats[("f1", "std")]) else stats[("f1", "std")]),
+                            "count": int(stats[("f1", "count")]),
+                        },
+                    }
+
+                logic_summary["overall"] = overall
+        else:
+            print(f"⚠️ Nenhum CSV de resultados lógicos por trial encontrado em {TRIAL_LOGIC_RESULT}")
+        
+
+        # ---------- Atualizar experimento ----------
+        prov.update_experiment_summaries(
+            experiment_id=experiment_id,
+            jaccard_summary=jaccard_summary,
+            cosine_summary=cosine_summary,
+            logic_summary=logic_summary,
+        )
+        prov.close()
+
+        print("📊 Overview de métricas salvo na tabela experiment.")
     
     else:
         print("\n ❌ Explainability dataset is not validy, delete and try generating a new one")

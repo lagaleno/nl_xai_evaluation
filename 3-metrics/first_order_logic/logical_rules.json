@@ -1,83 +1,83 @@
 {
   "rules": [
     {
-      "name": "Location Inheritance",
-      "description": "Part-of relationship implies location inheritance",
+      "name": "Membership Inheritance",
+      "description": "If an entity is a member of a group and the group has a parent, then the entity is also a member of its parent.",
       "premises": [
         {
-          "predicate": "part_of",
+          "predicate": "member_of",
           "args": [
-            "whole1",
-            "part"
+            "entity",
+            "group"
           ]
         },
         {
-          "predicate": "located_at",
+          "predicate": "has_parent",
           "args": [
-            "part",
-            "location"
+            "group",
+            "parent"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "located_at",
+        "predicate": "member_of",
         "args": [
-          "whole1",
-          "location"
+          "entity",
+          "parent"
         ]
       }
     },
     {
-      "name": "Authorship Propagation",
-      "description": "Has-author relationship implies authorship propagation",
+      "name": "Creator Inheritance",
+      "description": "If an entity was created by someone and the creator is a member of a group, then the entity is also a member of that group.",
       "premises": [
         {
-          "predicate": "has_author",
+          "predicate": "created_by",
           "args": [
-            "work",
-            "author"
+            "entity",
+            "creator"
           ]
         },
         {
-          "predicate": "part_of",
+          "predicate": "member_of",
           "args": [
-            "whole1",
-            "work"
+            "creator",
+            "group"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "has_author",
+        "predicate": "member_of",
         "args": [
-          "whole1",
-          "author"
+          "entity",
+          "group"
         ]
       }
     },
     {
-      "name": "Marriage Transitivity",
-      "description": "Is-married-to relationship implies transitivity",
+      "name": "Actor Inheritance",
+      "description": "If an actor played a role in a movie and the movie was starred in by another actor, then the first actor also starred in that movie.",
       "premises": [
         {
-          "predicate": "is_married_to",
+          "predicate": "played_role",
           "args": [
-            "person1",
-            "person2"
+            "actor",
+            "role"
           ]
         },
         {
-          "predicate": "is_married_to",
+          "predicate": "starred_in",
           "args": [
-            "person2",
-            "person3"
+            "movie",
+            "actor"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "is_married_to",
+        "predicate": "starred_in",
         "args": [
-          "person1",
-          "person3"
+          "actor",
+          "movie"
         ]
       }
     }

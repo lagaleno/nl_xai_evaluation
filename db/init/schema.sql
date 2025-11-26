@@ -5,6 +5,9 @@ CREATE TABLE experiment (
     seed INT,
     n_samples INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    jaccard_summary JSON,
+    cosine_summary JSON,
+    logic_summary JSON
 ) ENGINE=InnoDB;
 
 -- Atividade de criação do dataset de explicabilidade

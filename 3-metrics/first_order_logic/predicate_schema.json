@@ -6,47 +6,55 @@
         "entity",
         "location"
       ],
-      "description": "An entity is located at a specific location"
+      "description": "Entity is located at a specific location."
     },
     {
-      "name": "part_of",
-      "args": [
-        "whole",
-        "part"
-      ],
-      "description": "A part is part of a whole entity"
-    },
-    {
-      "name": "has_author",
-      "args": [
-        "work",
-        "author"
-      ],
-      "description": "A work has an author"
-    },
-    {
-      "name": "is_married_to",
-      "args": [
-        "person1",
-        "person2"
-      ],
-      "description": "Two people are married to each other"
-    },
-    {
-      "name": "plays_role_in",
+      "name": "member_of",
       "args": [
         "entity",
-        "role"
+        "group"
       ],
-      "description": "An entity plays a specific role in something"
+      "description": "Entity belongs to a particular group or organization."
     },
     {
-      "name": "has_type",
+      "name": "type_of",
       "args": [
-        "thing",
-        "type"
+        "entity",
+        "category"
       ],
-      "description": "A thing has a specific type or category"
+      "description": "Entity has a certain type or category."
+    },
+    {
+      "name": "created_by",
+      "args": [
+        "entity",
+        "creator"
+      ],
+      "description": "Entity was created by a specific person or entity."
+    },
+    {
+      "name": "starred_in",
+      "args": [
+        "actor",
+        "movie"
+      ],
+      "description": "Actor starred in a particular movie."
+    },
+    {
+      "name": "played_role",
+      "args": [
+        "actor",
+        "role"
+      ],
+      "description": "Actor played a certain role in a movie or show."
+    },
+    {
+      "name": "has_parent",
+      "args": [
+        "entity",
+        "parent"
+      ],
+      "description": "Entity has a parent entity or relationship."
     }
   ]
 }

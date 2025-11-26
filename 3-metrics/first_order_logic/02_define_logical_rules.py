@@ -299,7 +299,8 @@ def main():
 
     rules_config = {
         "prompt": prompt,
-        "list_rules": rules,
+        "list_rules": rules["rules"],
+        "qtt_rules": len(rules["rules"]),
         "model": LLAMA_MODEL_NAME,
         "target_min_rules": TARGET_MIN_RULES,
         "target_max_rules": TARGET_MAX_RULES, 

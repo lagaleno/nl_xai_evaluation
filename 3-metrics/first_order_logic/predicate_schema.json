@@ -1,52 +1,52 @@
 {
   "predicates": [
     {
-      "name": "AUTHOR",
-      "args": [
-        "entity",
-        "work"
-      ],
-      "description": "Represents authorship relationship between an entity and a work"
-    },
-    {
-      "name": "LOCATION",
+      "name": "located_at",
       "args": [
         "entity",
         "location"
       ],
-      "description": "Indicates the location where something is situated"
+      "description": "An entity is located at a specific location"
     },
     {
-      "name": "TYPE",
+      "name": "part_of",
+      "args": [
+        "whole",
+        "part"
+      ],
+      "description": "A part is part of a whole entity"
+    },
+    {
+      "name": "has_author",
+      "args": [
+        "work",
+        "author"
+      ],
+      "description": "A work has an author"
+    },
+    {
+      "name": "is_married_to",
+      "args": [
+        "person1",
+        "person2"
+      ],
+      "description": "Two people are married to each other"
+    },
+    {
+      "name": "plays_role_in",
       "args": [
         "entity",
+        "role"
+      ],
+      "description": "An entity plays a specific role in something"
+    },
+    {
+      "name": "has_type",
+      "args": [
+        "thing",
         "type"
       ],
-      "description": "Describes the type or category of an entity"
-    },
-    {
-      "name": "PARENTAGE",
-      "args": [
-        "person",
-        "person"
-      ],
-      "description": "Represents a parent-child relationship between two people"
-    },
-    {
-      "name": "MARRIAGE",
-      "args": [
-        "person",
-        "person"
-      ],
-      "description": "Indicates the marital status between two people"
-    },
-    {
-      "name": "PARTICIPATION",
-      "args": [
-        "entity",
-        "work"
-      ],
-      "description": "Represents an entity's participation in a work or project"
+      "description": "A thing has a specific type or category"
     }
   ]
 }

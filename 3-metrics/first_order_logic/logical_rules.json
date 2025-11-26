@@ -1,29 +1,83 @@
 {
   "rules": [
     {
-      "name": "Authorship inheritance",
-      "description": "An author's works are of a certain type if they are an author and their work is of that type.",
+      "name": "Location Inheritance",
+      "description": "Part-of relationship implies location inheritance",
       "premises": [
         {
-          "predicate": "AUTHOR",
+          "predicate": "part_of",
           "args": [
-            "entity",
-            "work"
+            "whole1",
+            "part"
           ]
         },
         {
-          "predicate": "TYPE",
+          "predicate": "located_at",
           "args": [
-            "entity",
-            "type"
+            "part",
+            "location"
           ]
         }
       ],
       "conclusion": {
-        "predicate": "TYPE",
+        "predicate": "located_at",
         "args": [
-          "work",
-          "type"
+          "whole1",
+          "location"
+        ]
+      }
+    },
+    {
+      "name": "Authorship Propagation",
+      "description": "Has-author relationship implies authorship propagation",
+      "premises": [
+        {
+          "predicate": "has_author",
+          "args": [
+            "work",
+            "author"
+          ]
+        },
+        {
+          "predicate": "part_of",
+          "args": [
+            "whole1",
+            "work"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "has_author",
+        "args": [
+          "whole1",
+          "author"
+        ]
+      }
+    },
+    {
+      "name": "Marriage Transitivity",
+      "description": "Is-married-to relationship implies transitivity",
+      "premises": [
+        {
+          "predicate": "is_married_to",
+          "args": [
+            "person1",
+            "person2"
+          ]
+        },
+        {
+          "predicate": "is_married_to",
+          "args": [
+            "person2",
+            "person3"
+          ]
+        }
+      ],
+      "conclusion": {
+        "predicate": "is_married_to",
+        "args": [
+          "person1",
+          "person3"
         ]
       }
     }

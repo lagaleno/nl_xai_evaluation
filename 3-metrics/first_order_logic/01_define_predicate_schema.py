@@ -32,7 +32,7 @@ LLAMA_MODEL_NAME = "llama3"
 # Arquivo de saída com o esquema de predicados
 SCHEMA_OUT = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schema.json"
 
-TEMPERATURE = 0.5
+TEMPERATURE = 0.1
 
 EXAMPLES_ID = [] # guardar para proveniência
 # ===================================================
@@ -93,6 +93,9 @@ def build_prompt(examples):
     prompt = f"""
 You are helping to design a **logical predicate schema** for a factoid,
 multi-hop question answering dataset similar to HotpotQA.
+Here is an example of a row of the HotpotQA dataset for you to get the style of the data:
+
+{examples_block}
 
 Below are a few representative examples with a question, an answer,
 and a supporting passage (chunk). We want to define a **small, generic
@@ -128,11 +131,25 @@ The argument types should be generic labels like "entity", "person",
 
 Do not include any example-specific constants. Focus on the schema only.
 
-Here are the representative examples:
+Here is one example of a predicates list:
 
-{examples_block}
+{{
+  "predicates": [
+    {{
+      "name": "member_of_group",
+      "args": ["Person", "Group"],
+      "description": "True when a person is or was a member of a specific group, collective, or troupe (e.g., a comedy group)."
+    }},
+    {{
+      "name": "show_first_aired_on_channel",
+      "args": ["TVShow", "TVChannel"],
+      "description": "True when a television show first aired on a specific broadcast channel."
+    }},
+  ]
+}}
 
-Now propose the predicate schema in the JSON format described above having ONLY JSON with no text before or after the json schema.
+
+Now propose the general predicate schema for the multi-hop QA datasetr HotpotQA in the JSON format described above having ONLY JSON with no text before or after the json schema.
 """
     return prompt.strip()
 
@@ -179,7 +196,7 @@ def call_llama(prompt: str, temperature: float = TEMPERATURE) -> str:
 
     # Ollama retorna algo como {"message": {"role": "...", "content": "..."}, ...}
     text = out["message"]["content"].strip()
-
+    print(text)
     return text
 
 
@@ -222,14 +239,15 @@ def main():
 
     print(f"Using {len(examples)} examples to build the prompt.")
     prompt = build_prompt(examples)
-
+    print("antes do raw_output")
     # Chama o LLaMA
     raw_output = call_llama(prompt)
+    print(raw_output)
 
 
     # Tenta parsear JSON
     schema = parse_schema(raw_output)
-
+    print(schema)
     # Salva JSON final
     with open(SCHEMA_OUT, "w", encoding="utf-8") as f:
         json.dump(schema, f, indent=2, ensure_ascii=False)

@@ -12,7 +12,7 @@ THIS_FILE = Path(__file__).resolve()
 PROJECT_ROOT = THIS_FILE.parent.parent
 
 # Quantidade de amostras de HotpotQA
-N_SAMPLES = 50
+N_SAMPLES = 500
 
 SEED = 42
 random.seed(SEED)

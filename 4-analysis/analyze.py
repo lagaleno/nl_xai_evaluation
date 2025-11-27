@@ -27,7 +27,7 @@ LOGIC_SUMMARY_PATTERN = str(
 )
 
 # Output
-EXPERIMENT_ID = str(os.getenv("EXPERIMENT_ID")) or 28
+EXPERIMENT_ID = str(os.getenv("EXPERIMENT_ID"))
 FIGURES_DIR = THIS_FILE.parent / "figures" / EXPERIMENT_ID
 OUTPUT_TABLE = THIS_FILE.parent / "table" / EXPERIMENT_ID
 
@@ -234,7 +234,7 @@ def plot_overall_metric_comparison(wide_df: pd.DataFrame):
     plt.xticks(x, labels)
     plt.ylabel("Score")
     plt.ylim(0, 1)
-    plt.title("Comparison of all metrics across labels")
+    plt.title(f"Comparison of all metrics across labels (Exp: {EXPERIMENT_ID})")
     plt.legend()
     plt.tight_layout()
 
@@ -321,7 +321,7 @@ def main():
             JACCARD_RESULTS,
             value_col="jaccard_similarity",
             label_col="label",
-            title="Jaccard similarity distribution by label",
+            title=f"Jaccard similarity distribution by label (Exp: {EXPERIMENT_ID})",
             file_name=f"jaccard_boxplot_ex{EXPERIMENT_ID}.png",
         )
 
@@ -330,7 +330,7 @@ def main():
             COSINE_RESULTS,
             value_col="cosine_similarity",
             label_col="label",
-            title="Cosine similarity distribution by label",
+            title=f"Cosine similarity distribution by label (Exp: {EXPERIMENT_ID})",
             file_name=f"cosine_boxplot_ex{EXPERIMENT_ID}.png",
         )
 

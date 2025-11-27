@@ -25,12 +25,12 @@ PROJECT_ROOT = THIS_FILE.parent.parent
 LLAMA_MODEL = "llama3"  # troque se usar outro (ex: "llama3:8b")
 
 # Quantidade de amostras de HotpotQA
-N_SAMPLES = 50   
+N_SAMPLES = 20 
 
-SEED = 1
+SEED = 42
 random.seed(SEED)
 
-TEMPERATURE = 0.5
+TEMPERATURE = 0.4
 
 # Arquivos de saída
 JSONL_OUT = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama.jsonl"
@@ -88,6 +88,10 @@ train = pd.read_csv("../0-utils/hotpotqa_train.csv", sep=",")
 # Ajusta colunas que originalmente eram dicionários
 train["context"] = train["context"].apply(ast.literal_eval)
 train["supporting_facts"] = train["supporting_facts"].apply(ast.literal_eval)
+# Seleciona N_SAMPLEs do HotpotQA
+train = train.sample(frac=1, random_state=SEED).iloc[0:N_SAMPLES]
+
+
 
 # ==========================
 # 4) FUNÇÃO: construir CHUNK
@@ -247,7 +251,6 @@ if not (CSV_SUMMARY_OUT.exists()):
     )
     reuse_flag = False
     print(f"🧬 Creation registered with id={creation_id} for experiment={experiment_id}")
-
 
     print(f"✍️ Creating Explainability dataset")
     with open(JSONL_OUT, "w", encoding="utf-8") as fout:

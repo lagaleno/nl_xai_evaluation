@@ -1,81 +1,52 @@
 {
-  "predicate_schema": [
+  "predicates": [
     {
-      "question": "Which band had more members, The Why Store or Tegan and Sara?",
-      "answer": "The Why Store",
-      "supporting_passages": [
-        {
-          "title": [
-            "Heartthrob (album)",
-            "An Horse",
-            "Sick of Sarah",
-            "Walking with a Ghost",
-            "Things Couldn't Be Better",
-            "In the Valley, On the Shores",
-            "The Why Store",
-            "2010 Summer Tour EP",
-            "Closer (Tegan and Sara song)",
-            "Tegan and Sara"
-          ],
-          "sentences": [
-            [
-              "Heartthrob is the seventh studio album by Canadian pop duo Tegan and Sara, released on January 29, 2013 on Neil Young's label Vapor Records through Warner Bros.",
-              "Records.",
-              "It is also the first Tegan and Sara record to chart in New Zealand, the UK and Ireland.",
-              "On July 4, 2013, \"Heartthrob\" was certified Gold in Canada.",
-              "As of April 2016, \"Heartthrob\" has sold 199,000 copies in the United States."
-            ],
-            [
-              "An Horse is a two-person indie rock band from Brisbane, Australia, composed of Kate Cooper of Iron On on vocals and guitar and Damon Cox of Intercooler on drums.",
-              "In 2008 they toured the United States as an opening act for Tegan and Sara, prior to the release of their first album.",
-              "In August 2008, they opened for Death Cab for Cutie for their Australian tour.",
-              "They also opened for Silversun Pickups along with Cage The Elephant in October 2009 for an east coast leg of their Swoon tour.",
-              "After their own 2009 North American tour, An Horse played as a supporting act for Tegan and Sara in Canada in 2010.",
-              "In 2012 they accompanied Nada Surf on tour in the United States."
-            ],
-            [
-              "Sick of Sarah is a rock music band based in Minneapolis.",
-              "Their \"strong-voiced punky girl-rock\" has drawn comparisons to bands such as Dollyrots and Tegan and Sara.",
-              "Among their claims to fame, they are one of the most torrented bands of all time: the band was featured on the BitTorrent Artist Spotlight, and 1.7 million copies were downloaded.",
-              "Because their album 2205 was automatically downloaded with BitTorrent software, it was dubbed the \"spam album\", but the band benefited greatly from the publicity."
-            ],
-            [
-              "\"Walking with a Ghost\" is a song by Tegan and Sara, from their 2004 album \"So Jealous\" mostly written by Sara Quin, although credited to both band members, which was released as a single in 2005.",
-              "The song appears on the soundtrack for the 2005 movie \"Monster-in-Law\" and was also used in the season 3 promo for Medium."
-            ],
-            [
-              "Things Couldn't Be Better is the second studio album by Canadian rock band The Reason.",
-              "The song \"We're So Beyond This\" features guest vocals by Sara Quin of Tegan and Sara and the artwork was designed by artist Emy 'EE' Storey."
-            ],
-            [
-              "In The Valley, On The Shores is a solo EP released by Jim Ward.",
-              "It is the second time he released a solo EP, and is the second out of the three EP's in his acoustic EP trilogy.",
-              "It was released May 1, 2009 by Ward's Civil Defense League record label.",
-              "The EP also features Tegan Quin, from the band Tegan and Sara, who sings harmony on the second track \"Broken Songs\".",
-              "Only 500 copies of the physical CD were made.",
-              "The CD's were all hand numbered."
-            ],
-            [
-              "The Why Store was formed in the late 1980s in Muncie, Indiana, when bassist Greg Gardner and guitarist Michael David Smith, both Ball State University students, met up with Indianapolis drummer (Graig)Omar Adams."
-            ],
-            [
-              "2010 Summer Tour is an EP that features the American rock band Paramore, Canadian indie rock band Tegan and Sara, American rock band New Found Glory, and Swedish band Kadawatha.",
-              "The EP was sold during the 2010 Honda Civic Tour and the remaining dates of Paramore's Brand New Eyes World Tour."
-            ],
-            [
-              "\"Closer\" is a song written and performed by Canadian duo Tegan and Sara.",
-              "The song was written by Tegan Quin with contributions from Sara Quin and Greg Kurstin for their seventh studio album, \"Heartthrob\" (2013).",
-              "The song was released as the lead single from the album in September 2012.",
-              "Closer won \"Single of the Year\" at the 2014 Juno Awards.",
-              "The song was featured on the TV series \"Glee\" during its 82nd episode.",
-              "In 2013, it peaked at number one on \"Billboard\"'s Hot Dance Club Songs chart.",
-              "It also became their first single to chart on the \"Billboard\" Hot 100.",
-              "On April 20, 2013, 3600 vinyl copies of \"Closer Remixed\", including four more tracks than the digital EP, were exclusively released for Record Store Day 2013.",
-              "On July 4, 2013, \"Closer\" was certified platinum in Canada."
-            ]
-          ]
-        }
-      ]
+      "name": "author_of",
+      "args": [
+        "Person",
+        "Work"
+      ],
+      "description": "True when a person is the author of a specific work (e.g., book, movie, song)."
+    },
+    {
+      "name": "located_at",
+      "args": [
+        "Entity",
+        "Location"
+      ],
+      "description": "True when an entity is located at a specific place or location."
+    },
+    {
+      "name": "part_of",
+      "args": [
+        "Entity",
+        "Whole"
+      ],
+      "description": "True when one entity is part of another (e.g., a car is part of a fleet)."
+    },
+    {
+      "name": "type_of",
+      "args": [
+        "Entity",
+        "Type"
+      ],
+      "description": "True when an entity has a specific type or category."
+    },
+    {
+      "name": "created_by",
+      "args": [
+        "Work",
+        "Person"
+      ],
+      "description": "True when a work was created by a specific person (e.g., artist, writer)."
+    },
+    {
+      "name": "published_on",
+      "args": [
+        "Work",
+        "Date"
+      ],
+      "description": "True when a work was published on a specific date."
     }
   ]
 }

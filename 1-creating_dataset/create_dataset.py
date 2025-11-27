@@ -25,7 +25,7 @@ PROJECT_ROOT = THIS_FILE.parent.parent
 LLAMA_MODEL = "llama3"  # troque se usar outro (ex: "llama3:8b")
 
 # Quantidade de amostras de HotpotQA
-N_SAMPLES = 20 
+N_SAMPLES = 50 
 
 SEED = 42
 random.seed(SEED)

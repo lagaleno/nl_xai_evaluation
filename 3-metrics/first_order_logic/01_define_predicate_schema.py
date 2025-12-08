@@ -1,12 +1,10 @@
 import json
 import os
-import random
-import subprocess
 import requests
-
-import pandas as pd
 from pathlib import Path
 import sys
+
+import pandas as pd
 
 # Caminhos
 THIS_FILE = Path(__file__).resolve()
@@ -19,12 +17,11 @@ from provenance import ProvenanceDB  # noqa: E402
 
 # ================== CONFIGURAÇÕES ==================
 
-
 # Caminho para o CSV do HotpotQA preparado
-HOTPOT_CSV = PROJECT_ROOT / "0-utils" / "hotpotqa_train.csv"
+HOTPOT_CSV = PROJECT_ROOT / "1-creating_dataset" / "hotpotqa_sample.csv"
 
-# Número de exemplos para colocar no prompt
-N_EXAMPLES = 3
+# Tamanho do batch: quantas linhas do dataset por chamada ao LLaMA
+BATCH_SIZE = 10
 
 # Modelo do LLaMA no Ollama
 LLAMA_MODEL_NAME = "llama3"
@@ -34,57 +31,40 @@ SCHEMA_OUT = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schem
 
 TEMPERATURE = 0.1
 
-EXAMPLES_ID = [] # guardar para proveniência
 # ===================================================
 
 
-def load_sample_examples(csv_path: str, n: int = 3):
+def load_dataset(csv_path: Path) -> pd.DataFrame:
     """
-    Carrega alguns exemplos aleatórios do CSV do HotpotQA para
-    ilustrar o tipo de fato que queremos modelar com predicados.
+    Carrega o dataset inteiro do HotpotQA (versão CSV preparada).
+    Em seguida embaralha as linhas para dar mais variedade aos batches.
     """
-    if not os.path.exists(csv_path):
+    if not csv_path.exists():
         raise FileNotFoundError(f"CSV not found: {csv_path}")
 
     df = pd.read_csv(csv_path)
 
-    # Garante que temos pelo menos n exemplos
-    if len(df) < n:
-        n = len(df)
+    # Embaralha para evitar que só o começo do dataset influencie o schema
+    df = df.sample(frac=1.0, random_state=42).reset_index(drop=True)
+    return df
 
-    sample = df.sample(n=n, random_state=42)
-    examples = []
-    for _, row in sample.iterrows():
-        id = str(row.get("id", "")).strip()
+
+def build_batch_prompt(batch_rows: pd.DataFrame) -> str:
+    """
+    Constrói o prompt para o LLaMA propor um esquema de predicados,
+    usando um batch de exemplos do HotpotQA.
+    """
+    examples_text = []
+    for i, (_, row) in enumerate(batch_rows.iterrows(), start=1):
         question = str(row.get("question", "")).strip()
         answer = str(row.get("answer", "")).strip()
         context = str(row.get("context", "")).strip()
 
-        examples.append(
-            {
-                "question": question,
-                "answer": answer,
-                "context": context,
-            }
-        )
-
-        EXAMPLES_ID.append(id)
-
-    return examples
-
-
-def build_prompt(examples):
-    """
-    Constrói o prompt para o LLaMA propor um esquema de predicados
-    genérico e compacto, baseado em poucos exemplos do HotpotQA.
-    """
-    examples_text = []
-    for i, ex in enumerate(examples, start=1):
         block = (
             f"Example {i}:\n"
-            f"Question: {ex['question']}\n"
-            f"Answer: {ex['answer']}\n"
-            f"Supporting passage (chunk):\n{ex['context']}\n"
+            f"Question: {question}\n"
+            f"Answer: {answer}\n"
+            f"Supporting passage (chunk):\n{context}\n"
         )
         examples_text.append(block)
 
@@ -93,11 +73,8 @@ def build_prompt(examples):
     prompt = f"""
 You are helping to design a **logical predicate schema** for a factoid,
 multi-hop question answering dataset similar to HotpotQA.
-Here is an example of a row of the HotpotQA dataset for you to get the style of the data:
 
-{examples_block}
-
-Below are a few representative examples with a question, an answer,
+Below are several representative examples with a question, an answer,
 and a supporting passage (chunk). We want to define a **small, generic
 set of first-order logic predicates** that can capture the kinds of
 facts involved in such questions.
@@ -105,13 +82,17 @@ facts involved in such questions.
 The predicates should be:
 - general (not tied to specific entities),
 - reusable across many questions,
-- limited in number (ideally between 6 and 12),
+- limited in number (ideally between 6 and 20 in total, across all batches),
 - suitable for expressing relations like location, type, authorship,
   membership, biography, and part-whole relations.
 
 For each example, imagine what kinds of logical facts might be useful
 to represent (e.g., who did what, where something is located, what type
 an entity is, etc.). Then propose a compact schema of predicates.
+
+Here are the examples:
+
+{examples_block}
 
 Return your answer **strictly as JSON** with the following format:
 
@@ -123,7 +104,7 @@ Return your answer **strictly as JSON** with the following format:
       "description": "Short natural-language description of what this predicate means."
     }},
     ...
-  ],
+  ]
 }}
 
 The argument types should be generic labels like "entity", "person",
@@ -131,47 +112,19 @@ The argument types should be generic labels like "entity", "person",
 
 Do not include any example-specific constants. Focus on the schema only.
 
-Here is one example of a predicates list:
-
-{{
-  "predicates": [
-    {{
-      "name": "member_of_group",
-      "args": ["Person", "Group"],
-      "description": "True when a person is or was a member of a specific group, collective, or troupe (e.g., a comedy group)."
-    }},
-    {{
-      "name": "show_first_aired_on_channel",
-      "args": ["TVShow", "TVChannel"],
-      "description": "True when a television show first aired on a specific broadcast channel."
-    }},
-  ]
-}}
-
-
-Now propose the general predicate schema for the multi-hop QA datasetr HotpotQA in the JSON format described above having ONLY JSON with no text before or after the json schema.
+Now propose the general predicate schema (for this batch of examples)
+in the JSON format described above having ONLY JSON with no text before
+or after the json schema.
 """
     return prompt.strip()
 
 
 def call_llama(prompt: str, temperature: float = TEMPERATURE) -> str:
     """
-    Chama o modelo LLaMA via Ollama na linha de comando.
-    Se você usar outra interface, adapte esta função.
+    Chama o modelo LLaMA via Ollama (http://localhost:11434/api/chat)
+    e retorna o texto bruto da resposta.
     """
-    print("🧠 Calling LLaMA to propose predicate schema...")
-    # Comando básico do Ollama: `echo "prompt" | ollama run model`
-    # Aqui usamos subprocess para passar o prompt via stdin.
-    # result = subprocess.run(
-    #     ["ollama", "run", LLAMA_MODEL_NAME],
-    #     input=prompt,
-    #     text=True,
-    #     capture_output=True,
-    # )
-    """
-        Chama o modelo LLaMA via Ollama (http://localhost:11434/api/chat)
-        e tenta interpretar a saída como JSON.
-    """
+    print("🧠 Calling LLaMA to propose predicate schema for this batch...")
     url = "http://localhost:11434/api/chat"
 
     data = {
@@ -182,25 +135,19 @@ def call_llama(prompt: str, temperature: float = TEMPERATURE) -> str:
         "options": {
             "temperature": temperature,
         },
-        "stream": False
+        "stream": False,
     }
+
     resp = requests.post(url, json=data)
     resp.raise_for_status()
 
-    if not resp:
-        print("❌ Error calling LLaMA:")
-        print(resp.stderr)
-        raise RuntimeError("LLaMA call failed")
-    
     out = resp.json()
-
-    # Ollama retorna algo como {"message": {"role": "...", "content": "..."}, ...}
     text = out["message"]["content"].strip()
-    print(text)
+    # print(text)  # opcional: debug
     return text
 
 
-def parse_schema(raw_output: str):
+def parse_schema(raw_output: str) -> dict:
     """
     Extrai o bloco JSON de dentro da saída do LLM.
 
@@ -219,9 +166,8 @@ def parse_schema(raw_output: str):
         print(text)
         raise ValueError("No JSON block found in LLaMA output.")
 
-    json_str = text[start:end + 1]
+    json_str = text[start : end + 1]
 
-    # Tenta parsear diretamente
     try:
         data = json.loads(json_str)
         return data
@@ -232,31 +178,99 @@ def parse_schema(raw_output: str):
         print(json_str)
         raise
 
+
+def deduplicate_and_accumulate(global_predicates: dict, batch_schema: dict) -> None:
+    """
+    Atualiza o dicionário global de predicados com o que veio do batch.
+
+    global_predicates:
+      (name, args_tuple) -> {
+          "name": ...,
+          "args": [...],
+          "description": ...,
+          "usage_count": int
+      }
+
+    batch_schema:
+      {"predicates": [ {name, args, description}, ... ]}
+    """
+    preds = batch_schema.get("predicates", [])
+    for p in preds:
+        name = p.get("name")
+        args = p.get("args", [])
+        desc = p.get("description", "")
+
+        if not name or not isinstance(args, list):
+            continue
+
+        key = (name, tuple(args))
+
+        if key not in global_predicates:
+            global_predicates[key] = {
+                "name": name,
+                "args": args,
+                "description": desc,
+                "usage_count": 1,
+            }
+        else:
+            global_predicates[key]["usage_count"] += 1
+
+
 def main():
+    print(f"📥 Loading full dataset from: {HOTPOT_CSV}")
+    df = load_dataset(HOTPOT_CSV)
 
-    print(f"📥 Loading sample examples from: {HOTPOT_CSV}")
-    examples = load_sample_examples(HOTPOT_CSV, n=N_EXAMPLES)
+    n_rows = len(df)
+    print(f"Dataset loaded with {n_rows} rows.")
 
-    print(f"Using {len(examples)} examples to build the prompt.")
-    prompt = build_prompt(examples)
-    print("antes do raw_output")
-    # Chama o LLaMA
-    raw_output = call_llama(prompt)
-    print(raw_output)
+    global_predicates = {}  # (name, args_tuple) -> dict
 
+    # Loop em batches
+    num_batches = (n_rows + BATCH_SIZE - 1) // BATCH_SIZE
+    print(f"Processing in {num_batches} batches of size {BATCH_SIZE}...")
 
-    # Tenta parsear JSON
-    schema = parse_schema(raw_output)
-    print(schema)
+    for batch_idx in range(0, n_rows, BATCH_SIZE):
+        batch_rows = df.iloc[batch_idx : batch_idx + BATCH_SIZE]
+        print(f"\n=== Batch {batch_idx // BATCH_SIZE + 1} / {num_batches} ===")
+        print(f"Rows {batch_idx} to {batch_idx + len(batch_rows) - 1}")
+
+        prompt = build_batch_prompt(batch_rows)
+        raw_output = call_llama(prompt)
+        batch_schema = parse_schema(raw_output)
+
+        deduplicate_and_accumulate(global_predicates, batch_schema)
+
+        print(
+            f"🔁 Global predicates so far: {len(global_predicates)} "
+            f"(after processing this batch)"
+        )
+
+    # Monta schema final
+    final_schema = {
+        "predicates": [
+            {
+                "name": info["name"],
+                "args": info["args"],
+                "description": info["description"],
+                "usage_count": info["usage_count"],
+            }
+            for info in global_predicates.values()
+        ]
+    }
+
     # Salva JSON final
+    SCHEMA_OUT.parent.mkdir(parents=True, exist_ok=True)
     with open(SCHEMA_OUT, "w", encoding="utf-8") as f:
-        json.dump(schema, f, indent=2, ensure_ascii=False)
+        json.dump(final_schema, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ Predicate schema saved to: {SCHEMA_OUT}")
-    print("\nExtracted predicates:")
-    for pred in schema.get("predicates", []):
-        print(f"- {pred.get('name')}({', '.join(pred.get('args', []))})")
-    
+    print(f"\n✅ Global predicate schema saved to: {SCHEMA_OUT}")
+    print("\nExtracted predicates (name(args) [usage_count]):")
+    for p in final_schema["predicates"]:
+        name = p.get("name")
+        args = ", ".join(p.get("args", []))
+        usage = p.get("usage_count", 0)
+        print(f"- {name}({args})  [{usage}]")
+
     # ====== Proveniência ======
     logic_metric_id_env = os.getenv("LOGIC_METRIC_ID")
     if logic_metric_id_env is None:
@@ -266,12 +280,13 @@ def main():
     logic_metric_id = int(logic_metric_id_env)
 
     predicate_config = {
-        "prompt": prompt,
-        "list_predicates": schema,
         "model": LLAMA_MODEL_NAME,
-        "number_examples": N_EXAMPLES,
-        "qa_examples_id": EXAMPLES_ID,
-        "temperature": TEMPERATURE
+        "temperature": TEMPERATURE,
+        "batch_size": BATCH_SIZE,
+        "dataset_rows": n_rows,
+        "num_predicates": len(final_schema["predicates"]),
+        # Não estamos guardando IDs específicos de QA, pois usamos o dataset inteiro.
+        "schema": final_schema,
     }
 
     prov = ProvenanceDB()

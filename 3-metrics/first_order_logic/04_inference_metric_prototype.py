@@ -36,7 +36,7 @@ RELEVANT_PREDICATES = None
 # RELEVANT_PREDICATES = ["located_in", "type_of", "member_of", "founder_of"]
 
 # Limiares para classificação lógica baseados em cobertura de fatos
-THRESH_CORRECT = 0.8      # coverage >= 0.8 -> correct
+THRESH_CORRECT = 0.6      # coverage >= 0.8 -> correct
 THRESH_INCOMPLETE = 0.3   # 0.3 <= coverage < 0.8 -> incomplete
 # coverage < 0.3 -> incorrect
 

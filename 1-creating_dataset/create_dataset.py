@@ -10,7 +10,7 @@ import requests
 from tqdm.auto import tqdm
 import pandas as pd
 
-from provenance import ProvenanceDB
+# rom provenance import ProvenanceDB
 
 THIS_FILE = Path(__file__).resolve()
 
@@ -35,6 +35,7 @@ TEMPERATURE = 0.4
 # Arquivos de saída
 JSONL_OUT = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama.jsonl"
 CSV_SUMMARY_OUT = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama_summary.csv"
+CSV_HTOPOT_SAMPLE_OUT = PROJECT_ROOT / "1-creating_dataset" / "hotpotqa_sample.csv"
 
 # ==========================
 # 2) CHAMADA AO LLaMA (Ollama)
@@ -90,6 +91,7 @@ train["context"] = train["context"].apply(ast.literal_eval)
 train["supporting_facts"] = train["supporting_facts"].apply(ast.literal_eval)
 # Seleciona N_SAMPLEs do HotpotQA
 train = train.sample(frac=1, random_state=SEED).iloc[0:N_SAMPLES]
+train.to_csv(CSV_HTOPOT_SAMPLE_OUT, index=False)
 
 
 
@@ -227,30 +229,30 @@ rows_summary = []
 # ==========================
 # Recuperar EXPERIMENT_ID
 # ==========================
-experiment_id_env = os.getenv("EXPERIMENT_ID")
-if experiment_id_env is None:
-    raise RuntimeError(
-        "EXPERIMENT_ID not found in environment. "
-        "Run this script via 5-experiment/main.py."
-    )
+# experiment_id_env = os.getenv("EXPERIMENT_ID")
+# if experiment_id_env is None:
+#     raise RuntimeError(
+#         "EXPERIMENT_ID not found in environment. "
+#         "Run this script via 5-experiment/main.py."
+#     )
 
-experiment_id = int(experiment_id_env)
+# experiment_id = int(experiment_id_env)
 
-prov = ProvenanceDB()
+# prov = ProvenanceDB()
 
 if not (CSV_SUMMARY_OUT.exists()):
     # ==========================
     # Criar registro em CREATION
     # ==========================
-    creation_id = prov.create_creation(
-        experiment_id=experiment_id,
-        hotpotqa_sample=N_SAMPLES,
-        prompt=SYSTEM_GENERATE + " " + USER_GENERATE_TMPL,
-        model=LLAMA_MODEL,
-        temperature=TEMPERATURE,
-    )
+    # creation_id = prov.create_creation(
+    #     experiment_id=experiment_id,
+    #     hotpotqa_sample=N_SAMPLES,
+    #     prompt=SYSTEM_GENERATE + " " + USER_GENERATE_TMPL,
+    #     model=LLAMA_MODEL,
+    #     temperature=TEMPERATURE,
+    # )
     reuse_flag = False
-    print(f"🧬 Creation registered with id={creation_id} for experiment={experiment_id}")
+    # print(f"🧬 Creation registered with id={creation_id} for experiment={experiment_id}")
 
     print(f"✍️ Creating Explainability dataset")
     with open(JSONL_OUT, "w", encoding="utf-8") as fout:
@@ -305,24 +307,24 @@ if not (CSV_SUMMARY_OUT.exists()):
             fout.write(json.dumps(rec, ensure_ascii=False) + "\n")
             rows_summary.append(rec)
             
-            prov.insert_xai_row(
-                creation_id=creation_id,
-                sample_id=str(row["id"]),  # ou row["id"] se já for string
-                original_dataset_name=row.get("dataset", "hotpot_qa"),
-                question=row.get("question", ""),
-                answer=row.get("answer", ""),
-                chunk=str(rec.get("chunk", "")),
-                explanation=str(rec.get("explanations", "")),
-                meta={
-                    "label": row.get("label"),
-                    "reuse": bool(reuse_flag),
-                },
-            )
+            # prov.insert_xai_row(
+            #     creation_id=creation_id,
+            #     sample_id=str(row["id"]),  # ou row["id"] se já for string
+            #     original_dataset_name=row.get("dataset", "hotpot_qa"),
+            #     question=row.get("question", ""),
+            #     answer=row.get("answer", ""),
+            #     chunk=str(rec.get("chunk", "")),
+            #     explanation=str(rec.get("explanations", "")),
+            #     meta={
+            #         "label": row.get("label"),
+            #         "reuse": bool(reuse_flag),
+            #     },
+            # )
 
             
             time.sleep(0.2)  # só pra não saturar o servidor local
         
-        prov.close()
+        # prov.close()
         print("✅ XAI dataset creation registered in provenance DB.")
         # Salva CSV resumo
         pd.DataFrame(rows_summary).to_csv(CSV_SUMMARY_OUT, index=False)
@@ -340,15 +342,15 @@ else:
     # Se você quiser marcar explicitamente no prompt que é reuse:
     creation_prompt = "[REUSED DATASET]\n" + SYSTEM_GENERATE + " " + USER_GENERATE_TMPL
 
-    creation_id = prov.create_creation(
-        experiment_id=experiment_id,
-        hotpotqa_sample=N_SAMPLES,
-        prompt=str(creation_prompt),
-        model=LLAMA_MODEL,
-        temperature=TEMPERATURE,
-    )
+    # creation_id = prov.create_creation(
+    #     experiment_id=experiment_id,
+    #     hotpotqa_sample=N_SAMPLES,
+    #     prompt=str(creation_prompt),
+    #     model=LLAMA_MODEL,
+    #     temperature=TEMPERATURE,
+    # )
 
-    print(f"🧬 Creation id={creation_id} (reuse={reuse_flag})")
+    # print(f"🧬 Creation id={creation_id} (reuse={reuse_flag})")
 
     # ==========================
     # Registrar cada linha em XAI_DATASET
@@ -360,16 +362,16 @@ else:
             "reuse": bool(reuse_flag),
         }
 
-        prov.insert_xai_row(
-            creation_id=creation_id,
-            sample_id=str(row["id"]), 
-            original_dataset_name=row.get("dataset", "hotpot_qa"),
-            question=row.get("question", ""),
-            answer=row.get("answer", ""),
-            chunk=row.get("chunk", ""),
-            explanation=row.get("explanations", ""),
-            meta=meta,
-        )
+        # prov.insert_xai_row(
+        #     creation_id=creation_id,
+        #     sample_id=str(row["id"]), 
+        #     original_dataset_name=row.get("dataset", "hotpot_qa"),
+        #     question=row.get("question", ""),
+        #     answer=row.get("answer", ""),
+        #     chunk=row.get("chunk", ""),
+        #     explanation=row.get("explanations", ""),
+        #     meta=meta,
+        # )
 
-    prov.close()
+    # prov.close()
     print("✅ XAI dataset registrado no banco de proveniência.")

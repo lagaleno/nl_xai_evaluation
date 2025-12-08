@@ -1,8 +1,6 @@
 import json
 import os
-import subprocess
 import requests
-
 from pathlib import Path
 import sys
 
@@ -12,45 +10,38 @@ PROJECT_ROOT = THIS_FILE.parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from provenance import ProvenanceDB
+from provenance import ProvenanceDB  # noqa: E402
 
 # ================== CONFIGURAÇÕES ==================
 
-
-# Arquivo de entrada com o schema de predicados (o que você já gerou)
 SCHEMA_FILE = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "predicate_schema.json"
 
-# Arquivo de saída com as regras sugeridas
 RULES_OUT = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "logical_rules.json"
+RULES_RAW_OUT = PROJECT_ROOT / "3-metrics" / "first_order_logic" / "logical_rules_raw.json"
 
-# Modelo do LLaMA no Ollama
 LLAMA_MODEL_NAME = "llama3"
 
-# Quantidade alvo de regras (apenas para orientar o LLM)
 TARGET_MIN_RULES = 3
 TARGET_MAX_RULES = 12
 
 TEMPERATURE = 0.5
+
+# Ativar / desativar prints de debug na validação
+DEBUG_VALIDATION = True
+
 # ===================================================
 
 
-def load_schema(path: str):
-    if not os.path.exists(path):
+def load_schema(path: Path) -> dict:
+    if not path.exists():
         raise FileNotFoundError(f"Schema file not found: {path}")
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def build_prompt(schema: dict) -> str:
-    """
-    Constrói o prompt para o LLaMA propor regras lógicas gerais
-    (Horn clauses) com base APENAS no esquema de predicados.
-    """
     predicates = schema.get("predicates", [])
 
-    # Monta a listagem de predicados no formato:
-    # - located_in(entity, location)
-    # - type_of(entity, type)
     lines = []
     for p in predicates:
         name = p.get("name")
@@ -66,33 +57,28 @@ based ONLY on the predicate schema provided below.
 
 STRICT REQUIREMENTS YOU MUST FOLLOW:
 
-1. **Use ONLY these predicates exactly as written, with exactly these arguments
-   in exactly this order. Do NOT invent new predicates. Do NOT rename predicates.**
+1. Use ONLY these predicates exactly as written, with exactly these arguments
+   in exactly this order. Do NOT invent new predicates. Do NOT rename predicates.
    The allowed predicates are:
 
    {predicates_with_args}
 
-2. **DO NOT invent additional predicates** such as “typically_found_in”,
+2. DO NOT invent additional predicates such as “typically_found_in”,
    “associated_with”, “connected_to”, etc.
 
-3. **Avoid vague rules** that conclude “related_to(...)”.  
+3. Avoid vague rules that conclude `related_to(...)`.
    Only produce a rule with `related_to` IF the conclusion is clearly justified
-   and unavoidable from the semantics of the premises.  
-   If unsure, DO NOT use `related_to`.
+   by the premises. If unsure, DO NOT use `related_to`.
 
-4. **NO tautologies**.  
-   You MUST NOT produce rules where the conclusion is identical to a premise.
+4. NO tautologies. Do NOT produce rules where the conclusion is identical
+   to one of the premises.
 
-5. **NO purely associative rules** such as:  
-      created_by(x, a) AND created_by(y, b) → related_to(x, y)  
-   These are invalid.
-
-6. **Rules must be informational: they must generate NEW logical consequences**,  
+5. Rules must be informational: they must generate NEW logical consequences,
    e.g., transitivity, inheritance, propagation, membership inference, etc.
 
-7. You MUST produce **between 2 and 4 rules**, not more.
+6. You MUST produce between 3 and 8 rules.
 
-8. Output MUST be valid JSON ONLY. No explanation, no text before or after.
+7. Output MUST be valid JSON ONLY. No explanation, no text before or after.
 
 JSON FORMAT TO OUTPUT:
 {{
@@ -114,95 +100,13 @@ JSON FORMAT TO OUTPUT:
 """
     return prompt.strip()
 
-def validate_and_filter_rules(schema: dict, rules_obj: dict) -> dict:
-    """
-    Valida e filtra regras geradas pelo LLM:
-    - só aceita regras cujos predicados existem no schema,
-    - aridade bate com o schema,
-    - todas as variáveis da conclusão aparecem nas premissas,
-    - conclusão não é idêntica a uma premissa (evita tautologia).
-
-    Retorna um novo objeto {"rules": [...]} só com as regras válidas.
-    """
-    # Mapa: nome_predicado -> número de argumentos esperados
-    pred_arity = {
-        p["name"]: len(p.get("args", []))
-        for p in schema.get("predicates", [])
-    }
-
-    good_rules = []
-    for rule in rules_obj.get("rules", []):
-        premises = rule.get("premises", [])
-        conclusion = rule.get("conclusion", {})
-
-        # 1) Verifica se conclusion tem predicado conhecido e aridade correta
-        concl_pred = conclusion.get("predicate")
-        concl_args = conclusion.get("args", [])
-
-        if concl_pred not in pred_arity:
-            # predicado desconhecido
-            continue
-        if len(concl_args) != pred_arity[concl_pred]:
-            # aridade errada
-            continue
-
-        # 2) Verifica premissas: todos predicados conhecidos e aridade certa
-        premises_ok = True
-        for prem in premises:
-            ppred = prem.get("predicate")
-            pargs = prem.get("args", [])
-            if ppred not in pred_arity:
-                premises_ok = False
-                break
-            if len(pargs) != pred_arity[ppred]:
-                premises_ok = False
-                break
-        if not premises_ok:
-            continue
-
-        # 3) Conclusão não pode ser idêntica a uma das premissas (tautologia)
-        is_tautology = any(
-            (prem.get("predicate") == concl_pred and prem.get("args", []) == concl_args)
-            for prem in premises
-        )
-        if is_tautology:
-            continue
-
-        # 4) Todas as variáveis da conclusão devem aparecer em pelo menos uma premissa
-        vars_in_premises = set()
-        for prem in premises:
-            for v in prem.get("args", []):
-                vars_in_premises.add(v)
-
-        all_vars_bound = all(v in vars_in_premises for v in concl_args)
-        if not all_vars_bound:
-            # tipo "type" aparecendo só na conclusão cai aqui
-            continue
-
-        # Se passou por todos os checks, consideramos a regra válida
-        good_rules.append(rule)
-
-    return {"rules": good_rules}
-
-
 
 def call_llama(prompt: str, temperature: float = TEMPERATURE) -> str:
     """
-    Chama o modelo LLaMA via Ollama na linha de comando.
-    Ajuste LLAMA_MODEL_NAME conforme seu setup.
+    Chama o modelo LLaMA via Ollama (http://localhost:11434/api/chat)
+    e retorna o texto bruto.
     """
     print("🧠 Calling LLaMA to propose logical rules...")
-    # result = subprocess.run(
-    #     ["ollama", "run", LLAMA_MODEL_NAME],
-    #     input=prompt,
-    #     text=True,
-    #     capture_output=True,
-    # )
-
-    """
-        Chama o modelo LLaMA via Ollama (http://localhost:11434/api/chat)
-        e tenta interpretar a saída como JSON.
-    """
     url = "http://localhost:11434/api/chat"
 
     data = {
@@ -213,31 +117,19 @@ def call_llama(prompt: str, temperature: float = TEMPERATURE) -> str:
         "options": {
             "temperature": temperature,
         },
-        "stream": False
+        "stream": False,
     }
     resp = requests.post(url, json=data)
     resp.raise_for_status()
 
-    if not resp:
-        print("❌ Error calling LLaMA:")
-        print(resp.stderr)
-        raise RuntimeError("LLaMA call failed")
-    
     out = resp.json()
-
-    # Ollama retorna algo como {"message": {"role": "...", "content": "..."}, ...}
     text = out["message"]["content"].strip()
-
     return text
 
 
-def parse_rules(raw_output: str):
+def parse_rules(raw_output: str) -> dict:
     """
     Extrai o bloco JSON de dentro da saída do LLM.
-
-    - Procura o primeiro '{' e o último '}'.
-    - Tenta fazer json.loads nesse intervalo.
-    - Se não der certo, mostra a saída bruta para depuração.
     """
     text = raw_output.strip()
 
@@ -250,7 +142,7 @@ def parse_rules(raw_output: str):
         print(text)
         raise ValueError("No JSON block found in LLaMA output.")
 
-    json_str = text[start:end + 1]
+    json_str = text[start : end + 1]
 
     try:
         data = json.loads(json_str)
@@ -263,24 +155,111 @@ def parse_rules(raw_output: str):
         raise
 
 
-def main():
+def validate_and_filter_rules(schema: dict, rules_obj: dict) -> dict:
+    """
+    Valida e filtra regras geradas pelo LLM:
+    - só aceita regras cujos predicados existem no schema,
+    - aridade bate com o schema,
+    - opcionalmente filtra tautologias;
+    - NÃO vamos ser tão agressivos com variáveis da conclusão.
 
+    Retorna um novo objeto {"rules": [...]} só com as regras válidas.
+    """
+    pred_arity = {
+        p["name"]: len(p.get("args", []))
+        for p in schema.get("predicates", [])
+    }
+
+    good_rules = []
+    all_rules = rules_obj.get("rules", [])
+    if DEBUG_VALIDATION:
+        print(f"🔎 LLM returned {len(all_rules)} rules before validation.")
+
+    for idx, rule in enumerate(all_rules, start=1):
+        premises = rule.get("premises", [])
+        conclusion = rule.get("conclusion", {})
+
+        concl_pred = conclusion.get("predicate")
+        concl_args = conclusion.get("args", [])
+
+        # flag para debug
+        reason = None
+
+        # 1) Conclusão: predicado conhecido e aridade correta
+        if concl_pred not in pred_arity:
+            reason = f"unknown conclusion predicate '{concl_pred}'"
+        elif len(concl_args) != pred_arity[concl_pred]:
+            reason = (
+                f"wrong arity for conclusion '{concl_pred}': "
+                f"got {len(concl_args)}, expected {pred_arity[concl_pred]}"
+            )
+
+        # 2) Premissas: predicados conhecidos e aridade certa
+        if reason is None:
+            for prem in premises:
+                ppred = prem.get("predicate")
+                pargs = prem.get("args", [])
+                if ppred not in pred_arity:
+                    reason = f"unknown premise predicate '{ppred}'"
+                    break
+                if len(pargs) != pred_arity[ppred]:
+                    reason = (
+                        f"wrong arity for premise '{ppred}': "
+                        f"got {len(pargs)}, expected {pred_arity[ppred]}"
+                    )
+                    break
+
+        # 3) Conclusão não pode ser idêntica a uma das premissas (tautologia óbvia)
+        if reason is None:
+            is_tautology = any(
+                (prem.get("predicate") == concl_pred and prem.get("args", []) == concl_args)
+                for prem in premises
+            )
+            if is_tautology:
+                reason = "tautology (conclusion identical to a premise)"
+
+        if reason is not None:
+            if DEBUG_VALIDATION:
+                print(f"  ❌ Rule {idx} dropped: {reason}")
+            continue
+
+        # Se passou pelos checks básicos, aceitamos
+        good_rules.append(rule)
+        if DEBUG_VALIDATION:
+            print(f"  ✅ Rule {idx} accepted: {rule.get('name')}")
+
+    if DEBUG_VALIDATION:
+        print(f"✅ {len(good_rules)} / {len(all_rules)} rules accepted after validation.")
+
+    return {"rules": good_rules}
+
+
+def main():
     print(f"📥 Loading predicate schema from: {SCHEMA_FILE}")
     schema = load_schema(SCHEMA_FILE)
 
     prompt = build_prompt(schema)
 
-    # Chama o LLaMA
     raw_output = call_llama(prompt)
 
-    # Parseia regras
+    # Parseia regras "cruas"
     raw_rules = parse_rules(raw_output)
 
-    # Verifica se as regras geradas pela LLM estão de acordo com os predicados
+    # Salva as regras cruas para inspeção
+    RULES_RAW_OUT.parent.mkdir(parents=True, exist_ok=True)
+    with open(RULES_RAW_OUT, "w", encoding="utf-8") as f:
+        json.dump(raw_rules, f, indent=2, ensure_ascii=False)
+    print(f"📁 Raw logical rules saved to: {RULES_RAW_OUT}")
+
+    # Valida e filtra
     rules = validate_and_filter_rules(schema, raw_rules)
 
+    if len(rules.get("rules", [])) == 0:
+        print("⚠️ All rules were filtered out. Keeping RAW rules instead for inspection.")
+        # como fallback, mantemos as regras cruas:
+        rules = raw_rules
 
-    # Salva JSON final de regras
+    # Salva JSON final de regras (após validação ou fallback)
     with open(RULES_OUT, "w", encoding="utf-8") as f:
         json.dump(rules, f, indent=2, ensure_ascii=False)
 
@@ -288,7 +267,7 @@ def main():
     print("\nExtracted rules:")
     for rule in rules.get("rules", []):
         print(f"- {rule.get('name')}: {rule.get('description')}")
-    
+
     # === PROVENIÊNCIA ===
     logic_metric_id_env = os.getenv("LOGIC_METRIC_ID")
     if logic_metric_id_env is None:
@@ -302,14 +281,14 @@ def main():
         "list_rules": rules,
         "model": LLAMA_MODEL_NAME,
         "target_min_rules": TARGET_MIN_RULES,
-        "target_max_rules": TARGET_MAX_RULES, 
-        "temperature": TEMPERATURE
+        "target_max_rules": TARGET_MAX_RULES,
+        "temperature": TEMPERATURE,
     }
 
     prov = ProvenanceDB()
     prov.update_logic_metric_configs(
         logic_metric_id=logic_metric_id,
-        rules_config=rules_config
+        rules_config=rules_config,
     )
     prov.close()
 

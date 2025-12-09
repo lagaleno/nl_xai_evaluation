@@ -306,7 +306,6 @@ def main():
         return
 
     # 2) Definir caminho em records/facts/...
-    #    Podemos organizar por predicate_id + xai_dataset_id
     records_dir = RECORDS_ROOT / "facts" / f"p{predicate_id}_xd{xai_dataset_id}"
     records_dir.mkdir(parents=True, exist_ok=True)
 

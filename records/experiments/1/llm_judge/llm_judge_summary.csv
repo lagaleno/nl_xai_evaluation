@@ -1,7 +1,0 @@
-true_label,pred_label,count
-correct,correct,10
-incomplete,correct,8
-incorrect,correct,0
-correct,incorrect,0
-incomplete,incorrect,2
-incorrect,incorrect,10

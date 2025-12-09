@@ -44,6 +44,8 @@ random.seed(SEED)
 TEMPERATURE = 0.4
 os.environ["XAI_TEMPERATURE"] = str(TEMPERATURE)
 
+HOTPOTQA_OUT = PROJECT_ROOT / "0-utils" / "hotpotqa_train.csv"
+
 # Arquivos de saída
 JSONL_OUT = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama.jsonl"
 CSV_SUMMARY_OUT = PROJECT_ROOT / "1-creating_dataset" / "explainrag_hotpot_llama_summary.csv"
@@ -105,7 +107,7 @@ hotpot_sample_id = prov.get_or_create_hotpot_sample(
     )
 
 # Carrega o arquivo csv
-train = pd.read_csv("../0-utils/hotpotqa_train.csv", sep=",")
+train = pd.read_csv(HOTPOTQA_OUT, sep=",")
 # Ajusta colunas que originalmente eram dicionários
 train["context"] = train["context"].apply(ast.literal_eval)
 train["supporting_facts"] = train["supporting_facts"].apply(ast.literal_eval)
